@@ -1,4 +1,4 @@
-export class AppError extends Error {
+export class ErrorHandler extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;
 

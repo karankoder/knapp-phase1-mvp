@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import cors from "cors";
 import { PORT } from "./utils/constants";
 import rootRouter from "./routers";
-import { errorMiddleware } from "./middleware/errorMiddleware";
+import { errorMiddleware } from "./middleware/error.middleware";
 
 const app: Application = express();
 

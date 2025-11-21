@@ -26,7 +26,6 @@ pool.on("error", (err) => {
   process.exit(-1);
 });
 
-// Export a query wrapper for cleaner async/await usage
 export const query = (text: string, params?: any[]) => pool.query(text, params);
 
 export default pool;
