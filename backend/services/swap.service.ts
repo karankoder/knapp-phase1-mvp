@@ -1,10 +1,17 @@
 import axios from "axios";
 import { ErrorHandler } from "../utils/errorHandler";
-import { ZERO_EX_API_KEY } from "../utils/constants";
+import {
+  ZEROX_API_KEY,
+  ZEROX_BASE_URL,
+  ZEROX_CHAIN_ID,
+} from "../utils/constants";
 
 class SwapService {
-  private readonly baseUrl = "https://api.0x.org";
-  private readonly apiKey = ZERO_EX_API_KEY;
+  constructor(
+    private readonly baseUrl: string,
+    private readonly chainId: number,
+    private readonly apiKey?: string
+  ) {}
 
   /**
    * Fetches a swap quote (indicative price and calldata).
@@ -29,7 +36,7 @@ class SwapService {
         {
           headers,
           params: {
-            chainId: "8453",
+            chainId: this.chainId,
             sellToken,
             buyToken,
             sellAmount,
@@ -55,4 +62,8 @@ class SwapService {
   }
 }
 
-export const swapService = new SwapService();
+export const swapService = new SwapService(
+  ZEROX_BASE_URL,
+  ZEROX_CHAIN_ID,
+  ZEROX_API_KEY
+);
