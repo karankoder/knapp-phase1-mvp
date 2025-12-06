@@ -31,6 +31,7 @@ class AuthService {
             ],
           },
         },
+
         include: {
           wallets: true,
         },

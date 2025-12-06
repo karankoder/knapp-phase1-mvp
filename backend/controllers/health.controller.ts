@@ -15,7 +15,6 @@ export const healthController = {
   dbHealth: catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       try {
-        // The first query triggers a real DB connection
         await prisma.$queryRaw`SELECT NOW()`;
 
         return res.json({

@@ -3,8 +3,8 @@ import { walletController } from "../controllers/wallet.controller";
 
 const router = Router();
 
-router.post("/connect", walletController.connectWallet);
+router.get("/prices", walletController.getMarketPrices);
 
-router.get("/:address/balance", walletController.getBalance);
+router.get("/portfolio", walletController.getMyPortfolio);
 
 export default router;
