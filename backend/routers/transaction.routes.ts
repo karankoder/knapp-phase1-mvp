@@ -5,7 +5,12 @@ import { authentication } from "../middleware/auth.middleware";
 const router = Router();
 
 router.post("/send", authentication, transactionController.transfer);
-
-router.patch("/:id", authentication, transactionController.updateTransaction);
+router.get("/history", authentication, transactionController.getHistory);
+router.get("/:transactionId", authentication, transactionController.getById);
+router.patch(
+  "/:transactionId",
+  authentication,
+  transactionController.updateTransaction
+);
 
 export default router;

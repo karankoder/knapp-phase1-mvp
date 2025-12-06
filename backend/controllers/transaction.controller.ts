@@ -34,15 +34,55 @@ export const transactionController = {
     }
   ),
 
-  updateTransaction: catchAsync(
+  getHistory: catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+
+      const transactions = await transactionService.getTransactionsByUser(
+        userId
+      );
+
+      res.status(200).json({
+        success: true,
+        count: transactions.length,
+        transactions,
+      });
+    }
+  ),
+
+  getById: catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
       const { id } = req.params;
+      const userId = req.user.id;
+
+      const transaction = await transactionService.getTransactionById(
+        id,
+        userId
+      );
+
+      res.status(200).json({
+        success: true,
+        transaction,
+      });
+    }
+  ),
+
+  updateTransaction: catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { transactionId } = req.params;
       const { category, userNote } = req.body;
+
+      if (!category && !userNote) {
+        throw new ErrorHandler(
+          "Please provide category or userNote to update",
+          400
+        );
+      }
       const userId = req.user.id;
 
       const transaction = await transactionService.updateTransaction(
         userId,
-        id,
+        transactionId,
         category,
         userNote
       );

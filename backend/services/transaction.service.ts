@@ -98,13 +98,53 @@ class TransactionService {
     return transaction;
   }
 
+  public async getTransactionsByUser(userId: string) {
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        OR: [{ senderId: userId }, { receiverId: userId }],
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        sender: {
+          select: { handle: true, profilePicUrl: true },
+        },
+        receiver: {
+          select: { handle: true, profilePicUrl: true },
+        },
+      },
+    });
+
+    return transactions;
+  }
+
+  public async getTransactionById(transactionId: string, userId: string) {
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+      include: {
+        sender: { select: { handle: true } },
+        receiver: { select: { handle: true } },
+      },
+    });
+
+    if (!transaction) {
+      throw new ErrorHandler("Transaction not found", 404);
+    }
+
+    if (transaction.senderId !== userId && transaction.receiverId !== userId) {
+      throw new ErrorHandler("Not authorized to view this transaction", 403);
+    }
+
+    return transaction;
+  }
+
   public async updateTransaction(
     userId: string,
     transactionId: string,
     category?: string,
     userNote?: string
   ) {
-    // Check if transaction exists and belongs to user (either sender or receiver can edit for now)
     const existingTx = await prisma.transaction.findUnique({
       where: { id: transactionId },
     });
@@ -113,7 +153,6 @@ class TransactionService {
       throw new ErrorHandler("Transaction not found", 404);
     }
 
-    // Allow user to edit if they are the sender OR the receiver
     if (existingTx.senderId !== userId && existingTx.receiverId !== userId) {
       throw new ErrorHandler("Not authorized to edit this transaction", 403);
     }
