@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import prisma from "../config/prisma";
 import { ErrorHandler } from "../utils/errorHandler";
 import { JWT_EXPIRES_IN, JWT_SECRET, SALT_ROUNDS } from "../utils/constants";
+import { ethers } from "ethers";
 
 class AuthService {
   public async register(
@@ -10,6 +11,10 @@ class AuthService {
     password: string,
     publicAddress: string
   ) {
+    if (!ethers.isAddress(publicAddress)) {
+      throw new ErrorHandler("Invalid Ethereum wallet address", 400);
+    }
+
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ handle }, { publicAddress }],
@@ -24,12 +29,13 @@ class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const normalizedAddress = publicAddress.toLowerCase();
 
     const newUser = await prisma.user.create({
       data: {
         handle,
         passwordHash,
-        publicAddress,
+        publicAddress: normalizedAddress,
       },
     });
 

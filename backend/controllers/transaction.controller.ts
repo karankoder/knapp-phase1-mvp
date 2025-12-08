@@ -24,7 +24,7 @@ export const transactionController = {
 
   syncTransaction: catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const senderId = req.user.id;
+      const senderProfile = req.user;
       const {
         receiverAddress,
         txHash,
@@ -46,7 +46,7 @@ export const transactionController = {
       }
 
       const transaction = await transactionService.syncTransaction({
-        senderId,
+        senderProfile,
         receiverAddress,
         txHash,
         amount,

@@ -17,3 +17,6 @@ export const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY || "";
 export const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 export const DEFAULT_ASSET_IDS = ["bitcoin", "ethereum", "solana"];
 export const VS_CURRENCY = "usd";
+
+// RPC Endpoints
+export const RPC_URL = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`;

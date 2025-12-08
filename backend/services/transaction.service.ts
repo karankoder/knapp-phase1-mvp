@@ -1,7 +1,10 @@
+import { ethers } from "ethers";
 import prisma from "../config/prisma";
 import { TxStatus } from "../generated/prisma";
 import { ErrorHandler } from "../utils/errorHandler";
+import { RPC_URL } from "../utils/constants";
 
+const provider = new ethers.JsonRpcProvider(RPC_URL);
 class TransactionService {
   public async resolveHandle(handle: string) {
     const user = await prisma.user.findUnique({
@@ -23,7 +26,7 @@ class TransactionService {
   }
 
   public async syncTransaction(data: {
-    senderId: string;
+    senderProfile: any;
     receiverAddress: string;
     txHash: string;
     amount: number | string;
@@ -32,16 +35,57 @@ class TransactionService {
     category?: string;
     userNote?: string;
   }) {
+    const normalizedTxHash = data.txHash.toLowerCase();
+    const normalizedSenderAddress =
+      data.senderProfile.publicAddress.toLowerCase();
+    const normalizedReceiverAddress = data.receiverAddress.toLowerCase();
+
     const existingTx = await prisma.transaction.findUnique({
-      where: { txHash: data.txHash },
+      where: { txHash: normalizedTxHash },
     });
 
     if (existingTx) {
-      return existingTx;
+      throw new ErrorHandler("Transaction already synced", 409);
+    }
+
+    const tx = await provider.getTransaction(normalizedTxHash);
+
+    if (!tx) {
+      throw new ErrorHandler("Transaction hash not found on the network", 404);
+    }
+
+    if (!tx.from || tx.from.toLowerCase() !== normalizedSenderAddress) {
+      throw new ErrorHandler(
+        "Transaction signer does not match the logged-in user",
+        403
+      );
+    }
+
+    if (!tx.to || tx.to.toLowerCase() !== normalizedReceiverAddress) {
+      throw new ErrorHandler(
+        "Transaction receiver on-chain does not match the request",
+        400
+      );
+    }
+
+    if (tx.value.toString() !== data.rawAmountWei) {
+      throw new ErrorHandler(
+        "Transaction amount on-chain does not match the declared amount",
+        400
+      );
+    }
+
+    const calculatedDecimal = ethers.formatEther(data.rawAmountWei);
+
+    if (parseFloat(calculatedDecimal) !== parseFloat(data.amount.toString())) {
+      throw new ErrorHandler(
+        `Decimal amount mismatch. Wei: ${data.rawAmountWei} equals ${calculatedDecimal} ETH, but received ${data.amount}`,
+        400
+      );
     }
 
     const receiver = await prisma.user.findUnique({
-      where: { publicAddress: data.receiverAddress },
+      where: { publicAddress: normalizedReceiverAddress },
     });
 
     if (!receiver) {
@@ -53,15 +97,15 @@ class TransactionService {
 
     const transaction = await prisma.transaction.create({
       data: {
-        senderId: data.senderId,
+        senderId: data.senderProfile.id,
         receiverId: receiver.id,
-        txHash: data.txHash,
+        txHash: normalizedTxHash,
         assetSymbol: data.assetSymbol,
         amount: data.amount,
         rawAmountWei: data.rawAmountWei,
         category: data.category,
         userNote: data.userNote,
-        status: "PENDING", // Default to PENDING until confirmed on-chain
+        status: "COMPLETED",
       },
       include: {
         sender: { select: { handle: true } },

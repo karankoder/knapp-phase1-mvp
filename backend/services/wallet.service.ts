@@ -1,12 +1,16 @@
 import axios from "axios";
 import { ErrorHandler } from "../utils/errorHandler";
 import prisma from "../config/prisma";
+import { ethers } from "ethers";
+import { RPC_URL } from "../utils/constants";
 
 interface PriceResponse {
   [key: string]: {
     [key: string]: number;
   };
 }
+
+const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 class WalletService {
   private readonly baseUrl = "https://api.coingecko.com/api/v3";
@@ -53,20 +57,28 @@ class WalletService {
   }
 
   public async getUserPortfolio(userId: string) {
-    const wallets = await prisma.wallet.findMany({
-      where: { userId },
-      select: {
-        assetSymbol: true,
-        balance: true,
-      },
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { publicAddress: true },
     });
 
-    const portfolio = wallets.map((w) => ({
-      asset: w.assetSymbol,
-      balance: w.balance.toNumber(),
-    }));
+    if (!user || !user.publicAddress) {
+      throw new ErrorHandler("User wallet not found", 404);
+    }
 
-    return portfolio;
+    const balanceWei = await provider.getBalance(user.publicAddress);
+
+    const balanceEth = ethers.formatEther(balanceWei);
+
+    // For M1 (Sepolia), we only have ETH. Future updates can add ERC-20 tokens here.
+    return [
+      {
+        asset: "ETH",
+        balance: parseFloat(balanceEth),
+        rawBalance: balanceWei.toString(),
+        network: "Sepolia",
+      },
+    ];
   }
 }
 
