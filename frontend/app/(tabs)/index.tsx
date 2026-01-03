@@ -7,10 +7,12 @@ import { BalanceReveal } from "../../components/homeScreen/BalanceReveal";
 import { EmptyVaultCard } from "../../components/homeScreen/EmptyVaultCard";
 import { RecentActivity } from "../../components/homeScreen/RecentActivity";
 import { ScreenWrapper } from "../../components/ScreenWrapper";
+import { ShareModal } from "../../components/ShareModal";
 
 export default function HomeTab() {
   const router = useRouter();
   const [isBalanceRevealed, setIsBalanceRevealed] = React.useState(false);
+  const [shareModalOpen, setShareModalOpen] = React.useState(false);
   const isVaultEmpty = true;
 
   const handleSend = () => {
@@ -18,7 +20,7 @@ export default function HomeTab() {
   };
 
   const handleReceive = () => {
-    console.log("Receive pressed");
+    setShareModalOpen(true);
   };
 
   return (
@@ -67,6 +69,11 @@ export default function HomeTab() {
           <RecentActivity />
         </BalanceReveal>
       </ScrollView>
+
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+      />
     </ScreenWrapper>
   );
 }

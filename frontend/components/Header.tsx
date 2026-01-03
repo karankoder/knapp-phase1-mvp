@@ -18,8 +18,8 @@ export const Header = () => {
 
   return (
     <View className="pt-6 pb-2 px-6 flex-row items-center justify-between bg-transparent">
-      <Text className="text-xl font-semibold tracking-wide text-foreground">
-        Astr<Text className="text-primary">â</Text>
+      <Text className="text-2xl font-rajdhani-semibold tracking-wide text-foreground">
+        Astr<Text className=" font-rajdhani-semibold text-primary">â</Text>
       </Text>
 
       {!isHomePage && (

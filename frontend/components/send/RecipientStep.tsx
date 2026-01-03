@@ -1,10 +1,17 @@
 import { Search, Wallet } from "lucide-react-native";
 import { useState } from "react";
-import { ScrollView, Text, TextInput, View } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { AstraDropButton } from "./AstraDropButton";
 import { ContactListItem } from "./ContactListItem";
 import { QuickContactButton } from "./QuickContactButton";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface Contact {
   id: string;
@@ -40,6 +47,26 @@ export const RecipientStep = ({
   onAstraDropPress,
 }: RecipientStepProps) => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  const handlePressIn = () => {
+    scale.value = withTiming(0.98, {
+      duration: 100,
+    });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withTiming(1, {
+      duration: 200,
+    });
+  };
 
   const filteredContacts = contacts.filter(
     (c) =>
@@ -96,19 +123,33 @@ export const RecipientStep = ({
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(300)} className="mb-6">
-        <View className="w-full flex-row items-center gap-3 p-5 bg-[#100f12] border border-champagne/10 rounded-xl">
-          <View className="w-12 h-12 rounded-full bg-champagne/20 items-center justify-center">
-            <Wallet size={20} color="#FFE666" />
+        <AnimatedPressable
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={[
+            animatedStyle,
+            {
+              shadowColor: "#FFE666",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0,
+              shadowRadius: 12,
+            },
+          ]}
+        >
+          <View className="w-full flex-row items-center gap-3 p-5 bg-[#100f12] border border-champagne/10 rounded-xl">
+            <View className="w-12 h-12 rounded-full bg-champagne/20 items-center justify-center">
+              <Wallet size={20} color="#FFE666" />
+            </View>
+            <View className="flex-1">
+              <Text className="text-base font-rajdhani-semibold text-foreground">
+                Paste Wallet Address
+              </Text>
+              <Text className="text-sm font-rajdhani text-muted-foreground">
+                Send to any external address
+              </Text>
+            </View>
           </View>
-          <View className="flex-1">
-            <Text className="text-base font-rajdhani-semibold text-foreground">
-              Paste Wallet Address
-            </Text>
-            <Text className="text-sm font-rajdhani text-muted-foreground">
-              Send to any external address
-            </Text>
-          </View>
-        </View>
+        </AnimatedPressable>
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(400)}>
