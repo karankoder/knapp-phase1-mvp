@@ -1,6 +1,6 @@
-import { View, Text, Pressable } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Copy, Shield } from "lucide-react-native";
+import { Pressable, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface SecurityScreenProps {
   seedPhrase: string[];
