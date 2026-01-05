@@ -7,7 +7,7 @@ import { BalanceReveal } from "../../components/homeScreen/BalanceReveal";
 import { EmptyVaultCard } from "../../components/homeScreen/EmptyVaultCard";
 import { RecentActivity } from "../../components/homeScreen/RecentActivity";
 import { ScreenWrapper } from "../../components/ScreenWrapper";
-import { ShareModal } from "../../components/ShareModal";
+import { ShareModal } from "../../components/homeScreen/ShareModal";
 import { useWallet } from "@/hooks/useWallet";
 
 export default function HomeTab() {

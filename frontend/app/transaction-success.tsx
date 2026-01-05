@@ -1,13 +1,16 @@
 import { ActionButtons } from "@/components/transaction/ActionButtons";
+import { ProofCardModal } from "@/components/transaction/ProofCardModal";
 import { ShieldIcon } from "@/components/transaction/ShieldIcon";
 import { TransactionReceipt } from "@/components/transaction/TransactionReceipt";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, View } from "react-native";
+import { useState } from "react";
+import { ScrollView, Share, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TransactionSuccess() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
   const transactionData = {
     amount: (params.amount as string) || "0.00",
@@ -17,13 +20,26 @@ export default function TransactionSuccess() {
       handle: (params.recipientHandle as string) || "",
       avatar: (params.recipientAvatar as string) || "??",
     },
-    // Using the real USD value calculated in ConfirmStep, or fallback
+
     usdValue: (params.usdValue as string) || "$0.00",
     txHash: (params.txHash as string) || "",
     networkFee: (params.networkFee as string) || "0.0001",
   };
+
   const handleShareProof = () => {
-    console.log("Share proof");
+    setIsProofModalOpen(true);
+  };
+
+  const handleShareImage = async () => {
+    try {
+      await Share.share({
+        title: "Transaction Proof",
+        message: `I just sent ${transactionData.amount} ${transactionData.coin} to ${transactionData.recipient.handle} on Astrâ! 🚀`,
+      });
+      setIsProofModalOpen(false);
+    } catch (error) {
+      console.error("Share failed:", error);
+    }
   };
 
   const handleBackToDashboard = () => {
@@ -55,6 +71,18 @@ export default function TransactionSuccess() {
           onBackToDashboard={handleBackToDashboard}
         />
       </ScrollView>
+
+      <ProofCardModal
+        isOpen={isProofModalOpen}
+        onClose={() => setIsProofModalOpen(false)}
+        onShare={handleShareImage}
+        amount={transactionData.amount}
+        coin={transactionData.coin}
+        recipientHandle={
+          transactionData.recipient.handle || transactionData.recipient.name
+        }
+        transactionId={transactionData.txHash}
+      />
     </SafeAreaView>
   );
 }

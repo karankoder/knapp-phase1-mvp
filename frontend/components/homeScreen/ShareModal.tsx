@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/stores/useAuthStore";
 import { BlurView } from "expo-blur";
 import * as Clipboard from "expo-clipboard";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,15 +19,17 @@ interface ShareModalProps {
   onClose: () => void;
 }
 
-const WALLET_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F";
-const USER_HANDLE = "thomas";
-const VANITY_URL = `astra.money/${USER_HANDLE}`;
-
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
+  const { user } = useAuthStore();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  const WALLET_ADDRESS = user?.publicAddress || "";
+  const USER_HANDLE = user?.handle || "User";
+  const VANITY_URL = `astra.money/${USER_HANDLE}`;
+
   const handleCopyAddress = async () => {
+    if (!WALLET_ADDRESS) return;
     await Clipboard.setStringAsync(WALLET_ADDRESS);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -49,9 +52,10 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
     }
   };
 
+  const initials = USER_HANDLE.substring(0, 2).toUpperCase();
+
   return (
     <Modal visible={isOpen} transparent animationType="fade">
-      {/* Backdrop */}
       <View className="flex-1 bg-black/80">
         <BlurView intensity={20} style={{ flex: 1 }} tint="dark">
           <Pressable
@@ -67,11 +71,9 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
               onPress={(e) => e.stopPropagation()}
               style={{ width: "100%", maxWidth: 400 }}
             >
-              {/* Modal */}
               <Animated.View
                 entering={FadeInDown.springify().damping(25).stiffness(300)}
               >
-                {/* Share Card */}
                 <BlurView
                   intensity={90}
                   tint="dark"
@@ -87,7 +89,6 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                       backgroundColor: "rgba(255, 255, 255, 0.03)",
                     }}
                   >
-                    {/* Header */}
                     <View className="p-4 flex-row justify-end">
                       <Pressable
                         onPress={onClose}
@@ -102,9 +103,7 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                       </Pressable>
                     </View>
 
-                    {/* Card Content */}
                     <View className="px-8 pb-8 items-center">
-                      {/* Avatar */}
                       <Animated.View
                         entering={ZoomIn.delay(100).springify().damping(15)}
                       >
@@ -129,25 +128,23 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                             shadowRadius: 16,
                           }}
                         >
-                          <Text className="text-2xl font-orbitron-bold text-background">
-                            T
+                          <Text className="text-3xl font-rajdhani-bold text-background">
+                            {initials}
                           </Text>
                         </LinearGradient>
                       </Animated.View>
 
-                      {/* Handle */}
                       <Animated.View entering={FadeInDown.delay(150)}>
-                        <Text className="text-xl font-orbitron-semibold text-foreground mb-1">
+                        <Text className="text-2xl font-rajdhani-semibold text-foreground mb-1">
                           @{USER_HANDLE}
                         </Text>
                       </Animated.View>
                       <Animated.View entering={FadeIn.delay(200)}>
-                        <Text className="text-sm text-muted-foreground mb-6">
+                        <Text className="text-base font-rajdhani-medium text-muted-foreground mb-6">
                           Send me crypto instantly
                         </Text>
                       </Animated.View>
 
-                      {/* QR Code */}
                       <Animated.View
                         entering={ZoomIn.delay(250).springify()}
                         className="mb-6"
@@ -158,27 +155,27 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                           borderRadius: 16,
                           borderWidth: 1,
                           borderColor: "rgba(229, 210, 166, 0.3)",
-                          backgroundColor: "rgba(0, 0, 0, 0.3)",
+                          backgroundColor: "rgba(7, 6, 9, 0.5)",
                           justifyContent: "center",
                           alignItems: "center",
                         }}
                       >
-                        <View
+                        <LinearGradient
+                          colors={["#E5D2A6", "#C4A86B"]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
                           style={{
-                            backgroundColor: "#FFFFFF",
-                            padding: 20,
+                            width: 136,
+                            height: 136,
                             borderRadius: 12,
+                            justifyContent: "center",
+                            alignItems: "center",
                           }}
                         >
-                          <QrCode
-                            size={100}
-                            color="#14111C"
-                            strokeWidth={1.5}
-                          />
-                        </View>
+                          <QrCode size={80} color="#14111C" strokeWidth={2} />
+                        </LinearGradient>
                       </Animated.View>
 
-                      {/* Vanity URL */}
                       <Animated.View
                         entering={FadeInDown.delay(300)}
                         className="mb-6"
@@ -200,7 +197,6 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                         </Pressable>
                       </Animated.View>
 
-                      {/* Action Buttons */}
                       <Animated.View
                         entering={FadeInDown.delay(350)}
                         className="flex-row gap-3 w-full"
@@ -245,9 +241,8 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
                         </Pressable>
                       </Animated.View>
 
-                      {/* Tagline */}
                       <Animated.View entering={FadeIn.delay(400)}>
-                        <Text className="text-xs text-muted-foreground mt-6 text-center">
+                        <Text className="text-sm font-rajdhani-medium text-muted-foreground mt-6 text-center">
                           Claim your Astrâ Handle to get paid
                         </Text>
                       </Animated.View>
