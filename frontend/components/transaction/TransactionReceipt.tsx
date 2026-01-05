@@ -78,7 +78,7 @@ export const TransactionReceipt = ({
             {amount} {coin}
           </Text>
           <Text className="text-base font-rajdhani text-muted-foreground mt-1">
-            {usdValue}
+            ≈ ${usdValue}
           </Text>
         </View>
 

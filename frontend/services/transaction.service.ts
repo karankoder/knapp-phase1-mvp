@@ -4,7 +4,34 @@ import { api } from "./api";
 import { PROVIDER_URL } from "../utils/constants";
 
 const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
+export type TxStatus = "PENDING" | "COMPLETED" | "FAILED";
 
+export interface TransactionHistoryItem {
+  id: string;
+  senderId: string;
+  receiverId: string | null;
+  receiverAddress: string;
+  txHash: string;
+  assetSymbol: string;
+  amount: string;
+  rawAmountWei: string | null;
+  category: string | null;
+  userNote: string | null;
+  status: TxStatus;
+  createdAt: string;
+
+  // Relations
+  sender: {
+    handle: string;
+    profilePicUrl: string | null;
+    publicAddress: string;
+  };
+  receiver: {
+    handle: string;
+    profilePicUrl: string | null;
+    publicAddress: string;
+  } | null;
+}
 export const TransactionService = {
   estimateTransaction: async (toAddress: string, amountEth: string) => {
     try {
@@ -61,5 +88,17 @@ export const TransactionService = {
     }
 
     return txResponse;
+  },
+
+  getHistory: async (): Promise<TransactionHistoryItem[]> => {
+    try {
+      const { data } = await api.get<{ history: TransactionHistoryItem[] }>(
+        "/transaction/history"
+      );
+      return data.history;
+    } catch (error) {
+      console.error("Failed to fetch history", error);
+      return [];
+    }
   },
 };

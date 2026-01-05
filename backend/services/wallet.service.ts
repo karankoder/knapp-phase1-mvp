@@ -34,6 +34,7 @@ class WalletService {
           params: {
             ids: idsParam,
             vs_currencies: currency,
+            include_24hr_change: "true",
             x_cg_demo_api_key: process.env.COINGECKO_API_KEY,
           },
         }

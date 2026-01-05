@@ -1,5 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TransactionService } from "../services/transaction.service";
+
+export interface UI_Transaction {
+  id: string;
+  name: string;
+  date: string;
+  amount: string;
+  type: "receive" | "send";
+  status: string;
+  rawDate: Date;
+}
 
 export const useGasEstimation = (
   recipientAddress?: string,
@@ -42,4 +52,88 @@ export const useGasEstimation = (
   }, [recipientAddress, amount]);
 
   return { networkFee, isEstimating };
+};
+
+export const useTransactions = (currentUserId: string | undefined) => {
+  const [allTransactions, setAllTransactions] = useState<UI_Transaction[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<
+    UI_Transaction[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const formatAddress = (addr: string) => {
+    if (!addr) return "Unknown";
+    return `${addr.slice(0, 4)}...${addr.slice(-4)}`;
+  };
+
+  const fetchHistory = useCallback(async () => {
+    if (!currentUserId) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const rawHistory = await TransactionService.getHistory();
+
+      const formatted = rawHistory.map((tx) => {
+        const isSend = tx.senderId === currentUserId;
+
+        let name = "Unknown";
+        if (isSend) {
+          if (tx.receiver && tx.receiver.handle) {
+            name = `Sent to @${tx.receiver.handle}`;
+          } else {
+            // Fallback to receiverAddress from schema
+            name = `Sent to ${formatAddress(tx.receiverAddress)}`;
+          }
+        } else {
+          if (tx.sender && tx.sender.handle) {
+            name = `Received from @${tx.sender.handle}`;
+          } else {
+            name = `Received from ${formatAddress(tx.sender.publicAddress)}`;
+          }
+        }
+
+        const txDate = new Date(tx.createdAt);
+        const today = new Date();
+        const isToday = txDate.toDateString() === today.toDateString();
+
+        const dateString = isToday
+          ? `Today, ${txDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+          : txDate.toLocaleDateString([], { month: "short", day: "numeric" });
+
+        return {
+          id: tx.id,
+          name: name,
+          date: dateString,
+          rawDate: txDate,
+          type: isSend ? "send" : "receive",
+          amount: `${isSend ? "-" : "+"}${parseFloat(tx.amount).toFixed(4)} ${tx.assetSymbol}`,
+          status: tx.status,
+        } as UI_Transaction;
+      });
+
+      setAllTransactions(formatted);
+
+      setRecentTransactions(formatted.slice(0, 5));
+    } catch (e) {
+      console.error(e);
+      setError("Failed to load transactions");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentUserId]);
+
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
+
+  return {
+    allTransactions,
+    recentTransactions,
+    isLoading,
+    error,
+    refetch: fetchHistory,
+  };
 };

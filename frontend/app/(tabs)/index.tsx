@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import ActionButton from "../../components/homeScreen/ActionButton";
 import { BalanceReveal } from "../../components/homeScreen/BalanceReveal";
@@ -8,12 +8,21 @@ import { EmptyVaultCard } from "../../components/homeScreen/EmptyVaultCard";
 import { RecentActivity } from "../../components/homeScreen/RecentActivity";
 import { ScreenWrapper } from "../../components/ScreenWrapper";
 import { ShareModal } from "../../components/ShareModal";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function HomeTab() {
   const router = useRouter();
-  const [isBalanceRevealed, setIsBalanceRevealed] = React.useState(false);
-  const [shareModalOpen, setShareModalOpen] = React.useState(false);
+  const [isBalanceRevealed, setIsBalanceRevealed] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+
+  const { assets, totals, isLoading } = useWallet();
+
+  // const isVaultEmpty = assets.length === 0 || totals.balance === 0;
   const isVaultEmpty = true;
+
+  const changeSymbol = totals.changeAmount >= 0 ? "+" : "-";
+  const formattedChangeAmount = `${changeSymbol}$${Math.abs(totals.changeAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formattedChangePercent = `${totals.changePercentage.toFixed(2)}%`;
 
   const handleSend = () => {
     router.push("/send");
@@ -31,9 +40,9 @@ export default function HomeTab() {
         contentContainerStyle={{ paddingBottom: isBalanceRevealed ? 180 : 100 }}
       >
         <BalanceReveal
-          balance={24500}
-          changeAmount="+$1,240.50"
-          changePercentage="5.3%"
+          balance={totals.balance}
+          changeAmount={formattedChangeAmount}
+          changePercentage={formattedChangePercent}
           onRevealChange={setIsBalanceRevealed}
         >
           <View className="flex-row gap-4 mb-10">
