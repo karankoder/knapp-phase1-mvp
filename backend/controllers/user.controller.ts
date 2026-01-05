@@ -55,4 +55,30 @@ export const userController = {
       });
     }
   ),
+
+  search: catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { q } = req.query;
+
+      if (!q || typeof q !== "string") {
+        return res.status(200).json({ success: true, users: [] });
+      }
+
+      const users = await userService.searchUsers(q);
+
+      res.status(200).json({
+        success: true,
+        users,
+      });
+    }
+  ),
+
+  getQuickContacts: catchAsync(async (req: Request, res: Response) => {
+    const contacts = await userService.getRecentContacts(req.user.id);
+
+    res.status(200).json({
+      success: true,
+      contacts,
+    });
+  }),
 };

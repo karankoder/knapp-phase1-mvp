@@ -10,16 +10,18 @@ export default function TransactionSuccess() {
   const params = useLocalSearchParams();
 
   const transactionData = {
-    amount: (params.amount as string) || "1.45",
+    amount: (params.amount as string) || "0.00",
     coin: (params.coin as string) || "ETH",
     recipient: {
-      name: (params.recipientName as string) || "Alex Chen",
-      handle: (params.recipientHandle as string) || "@alexc",
-      avatar: (params.recipientAvatar as string) || "AC",
+      name: (params.recipientName as string) || "Unknown",
+      handle: (params.recipientHandle as string) || "",
+      avatar: (params.recipientAvatar as string) || "??",
     },
-    usdValue: (params.usdValue as string) || "$3,625.00",
+    // Using the real USD value calculated in ConfirmStep, or fallback
+    usdValue: (params.usdValue as string) || "$0.00",
+    txHash: (params.txHash as string) || "",
+    networkFee: (params.networkFee as string) || "0.0001",
   };
-
   const handleShareProof = () => {
     console.log("Share proof");
   };
@@ -44,6 +46,8 @@ export default function TransactionSuccess() {
           coin={transactionData.coin}
           recipient={transactionData.recipient}
           usdValue={transactionData.usdValue}
+          txHash={transactionData.txHash}
+          networkFee={transactionData.networkFee}
         />
 
         <ActionButtons

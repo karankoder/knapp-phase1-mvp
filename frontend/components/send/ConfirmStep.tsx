@@ -1,34 +1,73 @@
+import { useGasEstimation } from "@/hooks/useTransaction";
+import { TransactionService } from "@/services/transaction.service";
+import { useSendStore } from "@/stores/useSendStore";
+import { useRouter } from "expo-router";
 import { ArrowRight, Check } from "lucide-react-native";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-interface Contact {
-  id: string;
-  name: string;
-  handle: string;
-  avatar: string;
-}
-
-interface Coin {
-  symbol: string;
-  name: string;
-  balance: string;
-  value: string;
-}
-
 interface ConfirmStepProps {
-  recipient: Contact;
-  selectedCoin: Coin;
-  amount: string;
-  onConfirm: () => void;
+  priceUsd?: number;
 }
 
-export const ConfirmStep = ({
-  recipient,
-  selectedCoin,
-  amount,
-  onConfirm,
-}: ConfirmStepProps) => {
+export const ConfirmStep = ({ priceUsd = 0 }: ConfirmStepProps) => {
+  const router = useRouter();
+  const { recipient, amount, coinSymbol } = useSendStore();
+  const { networkFee, isEstimating } = useGasEstimation(
+    recipient?.publicAddress,
+    amount
+  );
+
+  const [isSending, setIsSending] = useState(false);
+
+  const estimatedUsdValue = (
+    parseFloat(amount || "0") * priceUsd
+  ).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const onConfirm = async () => {
+    if (!recipient?.publicAddress) return;
+
+    setIsSending(true);
+    try {
+      const tx = await TransactionService.sendTransaction(
+        recipient.publicAddress,
+        amount,
+        coinSymbol
+      );
+
+      router.replace({
+        pathname: "/transaction-success",
+        params: {
+          amount,
+          coin: coinSymbol,
+          recipientName: recipient.name || "External Wallet",
+          recipientHandle: recipient.handle,
+          recipientAvatar: recipient.avatar,
+          txHash: tx.hash,
+          networkFee,
+          usdValue: estimatedUsdValue,
+        },
+      });
+    } catch (error: any) {
+      Alert.alert(
+        "Transaction Failed",
+        error.message || "Unknown error occurred"
+      );
+      setIsSending(false);
+    }
+  };
+
   return (
     <ScrollView
       className="flex-1"
@@ -44,11 +83,10 @@ export const ConfirmStep = ({
           />
         </View>
         <Text className="text-5xl font-rajdhani text-foreground mb-1">
-          {amount}{" "}
-          <Text className="text-xl text-champagne">{selectedCoin.symbol}</Text>
+          {amount} <Text className="text-xl text-champagne">{coinSymbol}</Text>
         </Text>
         <Text className="text-lg font-rajdhani text-muted-foreground">
-          ≈ $1,234.56
+          ≈ ${estimatedUsdValue}
         </Text>
       </Animated.View>
 
@@ -61,11 +99,11 @@ export const ConfirmStep = ({
             <View className="flex-row items-center gap-2">
               <View className="w-6 h-6 rounded-full bg-muted items-center justify-center">
                 <Text className="text-[10px] font-rajdhani-bold text-foreground">
-                  {recipient.avatar}
+                  {recipient?.avatar || "??"}
                 </Text>
               </View>
               <Text className="text-sm font-rajdhani-semibold text-foreground">
-                {recipient.name}
+                {recipient?.name || "Unknown"}
               </Text>
             </View>
           </View>
@@ -77,7 +115,13 @@ export const ConfirmStep = ({
               Network Fee
             </Text>
             <Text className="text-base font-rajdhani text-foreground">
-              ~$2.50
+              {isEstimating ? (
+                <ActivityIndicator size="small" color="#FFE666" />
+              ) : (
+                <Text className="text-base font-rajdhani text-foreground">
+                  {networkFee} ETH
+                </Text>
+              )}
             </Text>
           </View>
 
@@ -86,7 +130,7 @@ export const ConfirmStep = ({
               Arrival
             </Text>
             <Text className="text-base font-rajdhani text-foreground">
-              ~30 seconds
+              ~15 seconds
             </Text>
           </View>
         </View>
@@ -95,12 +139,24 @@ export const ConfirmStep = ({
       <Animated.View entering={FadeIn.delay(200)}>
         <Pressable
           onPress={onConfirm}
+          disabled={isSending || isEstimating}
           className="w-full py-5 bg-champagne rounded-xl flex-row items-center justify-center gap-2 active:opacity-90"
         >
-          <Check size={20} color="#0D080F" />
-          <Text className="font-orbitron-bold text-sm tracking-hud uppercase text-[#0D080F]">
-            Confirm & Send
-          </Text>
+          {isSending ? (
+            <>
+              <ActivityIndicator color="#0D080F" />
+              <Text className="font-orbitron-bold text-sm tracking-hud uppercase text-[#0D080F]">
+                Sending...
+              </Text>
+            </>
+          ) : (
+            <>
+              <Check size={20} color="#0D080F" />
+              <Text className="font-orbitron-bold text-sm tracking-hud uppercase text-[#0D080F]">
+                Confirm & Send
+              </Text>
+            </>
+          )}
         </Pressable>
       </Animated.View>
     </ScrollView>

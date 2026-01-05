@@ -88,17 +88,18 @@ class TransactionService {
       where: { publicAddress: normalizedReceiverAddress },
     });
 
-    if (!receiver) {
-      // If the receiver isn't in our app, we can't link them in the relational DB easily.
-      // For Phase 1, we assume all transfers are between app users.
-      // If we want to support sending to external wallets, we'd need to make receiverId nullable in schema.
-      throw new ErrorHandler("Receiver is not a registered user", 404);
-    }
+    // if (!receiver) {
+    //   // If the receiver isn't in our app, we can't link them in the relational DB easily.
+    //   // For Phase 1, we assume all transfers are between app users.
+    //   // If we want to support sending to external wallets, we'd need to make receiverId nullable in schema.
+    //   throw new ErrorHandler("Receiver is not a registered user", 404);
+    // }
 
     const transaction = await prisma.transaction.create({
       data: {
         senderId: data.senderProfile.id,
-        receiverId: receiver.id,
+        receiverId: receiver ? receiver.id : null,
+        receiverAddress: normalizedReceiverAddress,
         txHash: normalizedTxHash,
         assetSymbol: data.assetSymbol,
         amount: data.amount,

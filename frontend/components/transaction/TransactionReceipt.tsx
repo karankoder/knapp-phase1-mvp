@@ -13,6 +13,8 @@ interface TransactionReceiptProps {
   coin: string;
   recipient: Recipient;
   usdValue: string;
+  txHash?: string;
+  networkFee?: string;
 }
 
 export const TransactionReceipt = ({
@@ -20,7 +22,13 @@ export const TransactionReceipt = ({
   coin,
   recipient,
   usdValue,
+  txHash,
+  networkFee = "0.0001",
 }: TransactionReceiptProps) => {
+  const formatHash = (hash?: string) => {
+    if (!hash) return "#PENDING";
+    return `${hash.slice(0, 6)}...${hash.slice(-4)}`;
+  };
   return (
     <>
       <Animated.View
@@ -77,10 +85,10 @@ export const TransactionReceipt = ({
         <View className="mt-6 gap-3">
           <View className="flex-row items-center justify-between">
             <Text className="text-sm font-rajdhani-medium text-muted-foreground">
-              Block
+              Tx Hash
             </Text>
             <Text className="text-sm font-rajdhani-medium text-foreground/70">
-              #192402
+              {formatHash(txHash)}
             </Text>
           </View>
           <View className="flex-row items-center justify-between">
@@ -91,12 +99,9 @@ export const TransactionReceipt = ({
               <View className="flex-row items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                 <Zap size={12} color="#34D399" />
                 <Text className="text-xs font-rajdhani-semibold text-emerald-400">
-                  $0.00
+                  {networkFee} ETH
                 </Text>
               </View>
-              <Text className="text-sm font-rajdhani-medium text-emerald-400/70">
-                (Sponsored)
-              </Text>
             </View>
           </View>
           <View className="flex-row items-center justify-between">

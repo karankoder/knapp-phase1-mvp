@@ -25,7 +25,8 @@ model User {
 model Transaction {
   id          String   @id @default(uuid())
   senderId    String
-  receiverId  String
+  receiverId  String?
+  receiverAddress String
 
   txHash      String   @unique
   assetSymbol String
@@ -41,7 +42,7 @@ model Transaction {
   createdAt   DateTime @default(now())
 
   sender      User     @relation("Sender", fields: [senderId], references: [id])
-  receiver    User     @relation("Receiver", fields: [receiverId], references: [id])
+  receiver    User?     @relation("Receiver", fields: [receiverId], references: [id])
 }
 
 enum TxStatus {

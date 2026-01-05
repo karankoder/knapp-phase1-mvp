@@ -1,48 +1,33 @@
+import { CoinAsset } from "@/hooks/useWallet";
+import { useSendStore } from "@/stores/useSendStore";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import Animated, { FadeIn } from "react-native-reanimated";
 
-interface Contact {
-  id: string;
-  name: string;
-  handle: string;
-  avatar: string;
-}
-
-interface Coin {
-  symbol: string;
-  name: string;
-  balance: string;
-  value: string;
-}
-
 interface AmountStepProps {
-  recipient: Contact;
-  coins: Coin[];
-  selectedCoin: Coin;
-  amount: string;
-  onSelectCoin: (coin: Coin) => void;
-  onAmountChange: (amount: string) => void;
-  onContinue: () => void;
+  asset?: CoinAsset;
 }
 
 const QUICK_AMOUNTS = ["25%", "50%", "75%", "MAX"];
 
-export const AmountStep = ({
-  recipient,
-  coins,
-  selectedCoin,
-  amount,
-  onSelectCoin,
-  onAmountChange,
-  onContinue,
-}: AmountStepProps) => {
+export const AmountStep = ({ asset }: AmountStepProps) => {
+  const { recipient, amount, setAmount, setStep, coinSymbol } = useSendStore();
+
+  const displaySymbol = asset?.symbol || "ETH";
+  const displayBalance = asset?.balance || "0.0000";
+
   const handleQuickAmount = (percentage: string) => {
-    const balance = parseFloat(selectedCoin.balance);
+    const balance = parseFloat(displayBalance);
     const multiplier = percentage === "MAX" ? 1 : parseInt(percentage) / 100;
-    onAmountChange((balance * multiplier).toFixed(4));
+    setAmount((balance * multiplier).toFixed(4));
   };
 
   const isValidAmount = amount && parseFloat(amount) > 0;
+
+  const onContinue = () => {
+    if (isValidAmount) {
+      setStep("confirm");
+    }
+  };
 
   return (
     <ScrollView
@@ -54,15 +39,15 @@ export const AmountStep = ({
         <View className="flex-row items-center gap-3 p-4 bg-[#100f12] border border-champagne/10 rounded-xl">
           <View className="w-10 h-10 rounded-full bg-muted items-center justify-center">
             <Text className="text-sm font-rajdhani-bold text-foreground">
-              {recipient.avatar}
+              {recipient?.avatar || "??"}
             </Text>
           </View>
           <View>
             <Text className="text-base font-rajdhani-semibold text-foreground">
-              {recipient.name}
+              {recipient?.name || "Unknown"}
             </Text>
             <Text className="text-sm font-rajdhani-medium text-muted-foreground">
-              {recipient.handle}
+              {recipient?.handle || ""}
             </Text>
           </View>
         </View>
@@ -77,40 +62,23 @@ export const AmountStep = ({
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
         >
-          {coins.map((coin) => (
-            <Pressable
-              key={coin.symbol}
-              onPress={() => onSelectCoin(coin)}
-              className={`px-4 py-2 rounded-xl ${
-                selectedCoin.symbol === coin.symbol
-                  ? "bg-champagne"
-                  : "bg-[#100f12] border border-champagne/20"
-              }`}
-              style={{
-                boxShadow:
-                  selectedCoin.symbol === coin.symbol
-                    ? "0 0 12px rgba(255, 230, 102, 0.4)"
-                    : "none",
-              }}
-            >
-              <Text
-                className={`text-sm font-orbitron-semibold ${
-                  selectedCoin.symbol === coin.symbol
-                    ? "text-[#0D080F]"
-                    : "text-foreground"
-                }`}
-              >
-                {coin.symbol}
-              </Text>
-            </Pressable>
-          ))}
+          <Pressable
+            className="px-4 py-2 rounded-xl bg-champagne"
+            style={{
+              boxShadow: "0 0 12px rgba(255, 230, 102, 0.4)",
+            }}
+          >
+            <Text className="text-sm font-orbitron-semibold text-[#0D080F]">
+              {displaySymbol}
+            </Text>
+          </Pressable>
         </ScrollView>
       </Animated.View>
 
       <Animated.View entering={FadeIn.delay(200)} className="items-center mb-6">
         <TextInput
           value={amount}
-          onChangeText={onAmountChange}
+          onChangeText={setAmount}
           placeholder="0.00"
           placeholderTextColor="rgba(255, 255, 255, 0.2)"
           keyboardType="decimal-pad"
@@ -118,7 +86,7 @@ export const AmountStep = ({
           style={{ maxWidth: 250 }}
         />
         <Text className="text-sm text-muted-foreground mt-2">
-          {selectedCoin.symbol} · Balance: {selectedCoin.balance}
+          {displaySymbol} · Balance: {displayBalance}
         </Text>
       </Animated.View>
 

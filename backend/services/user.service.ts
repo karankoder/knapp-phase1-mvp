@@ -85,6 +85,54 @@ class UserService {
 
     return !user;
   }
+
+  public async searchUsers(query: string) {
+    const cleanQuery = query.replace("@", "").toLowerCase();
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          { handle: { contains: cleanQuery, mode: "insensitive" } },
+          { displayName: { contains: cleanQuery, mode: "insensitive" } },
+        ],
+      },
+      take: 5,
+      select: {
+        id: true,
+        handle: true,
+        displayName: true,
+        profilePicUrl: true,
+        publicAddress: true,
+      },
+    });
+
+    return users;
+  }
+
+  public async getRecentContacts(userId: string, limit: number = 8) {
+    const recentTx = await prisma.transaction.findMany({
+      where: {
+        senderId: userId,
+        receiverId: { not: null },
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        receiver: {
+          select: {
+            id: true,
+            handle: true,
+            displayName: true,
+            profilePicUrl: true,
+            publicAddress: true,
+          },
+        },
+      },
+      distinct: ["receiverId"],
+      take: limit,
+    });
+
+    return recentTx.map((tx) => tx.receiver!);
+  }
 }
 
 export const userService = new UserService();

@@ -1,102 +1,25 @@
 import { useRouter } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AmountStep } from "../components/send/AmountStep";
 import { ConfirmStep } from "../components/send/ConfirmStep";
 import { RecipientStep } from "../components/send/RecipientStep";
 
-type Step = "recipient" | "amount" | "confirm";
-
-interface Contact {
-  id: string;
-  name: string;
-  handle: string;
-  avatar: string;
-}
-
-interface QuickContact {
-  id: string;
-  name: string;
-  avatar: string;
-  gradientColors: [string, string];
-}
-
-interface Coin {
-  symbol: string;
-  name: string;
-  balance: string;
-  value: string;
-}
-
-const quickContacts: QuickContact[] = [
-  {
-    id: "1",
-    name: "Alex",
-    avatar: "AC",
-    gradientColors: ["#8B5CF6", "#7C3AED"],
-  },
-  {
-    id: "2",
-    name: "Maria",
-    avatar: "MS",
-    gradientColors: ["#F43F5E", "#EC4899"],
-  },
-  {
-    id: "3",
-    name: "John",
-    avatar: "JD",
-    gradientColors: ["#F59E0B", "#F97316"],
-  },
-  {
-    id: "4",
-    name: "Sarah",
-    avatar: "SK",
-    gradientColors: ["#10B981", "#059669"],
-  },
-  {
-    id: "5",
-    name: "Marcus",
-    avatar: "MJ",
-    gradientColors: ["#3B82F6", "#6366F1"],
-  },
-];
-
-const contacts: Contact[] = [
-  { id: "1", name: "Alex Chen", handle: "@alexc", avatar: "AC" },
-  { id: "2", name: "Maria Silva", handle: "@msilva", avatar: "MS" },
-  { id: "3", name: "John Doe", handle: "@johnd", avatar: "JD" },
-  { id: "4", name: "Sarah Kim", handle: "@sarahk", avatar: "SK" },
-  { id: "5", name: "Marcus Johnson", handle: "@marcusj", avatar: "MJ" },
-];
-
-const coins: Coin[] = [
-  { symbol: "BTC", name: "Bitcoin", balance: "0.5421", value: "$23,450" },
-  { symbol: "ETH", name: "Ethereum", balance: "4.2", value: "$9,870" },
-  { symbol: "SOL", name: "Solana", balance: "125.5", value: "$2,510" },
-];
+import { useSendStore } from "@/stores/useSendStore";
+import { useWallet } from "@/hooks/useWallet";
 
 export default function Send() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("recipient");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRecipient, setSelectedRecipient] = useState<Contact | null>(
-    null
-  );
-  const [selectedCoin, setSelectedCoin] = useState(coins[0]);
-  const [amount, setAmount] = useState("");
 
-  const getHeaderTitle = () => {
-    switch (step) {
-      case "recipient":
-        return "Send To";
-      case "amount":
-        return "Enter Amount";
-      case "confirm":
-        return "Confirm";
-    }
-  };
+  const { step, setStep, reset } = useSendStore();
+
+  const { assets, isLoading } = useWallet();
+
+  useEffect(() => {
+    reset();
+  }, []);
 
   const handleBack = () => {
     if (step === "recipient") {
@@ -112,47 +35,15 @@ export default function Send() {
     router.back();
   };
 
-  const handleSelectContact = (contact: Contact) => {
-    setSelectedRecipient(contact);
-    setStep("amount");
-  };
-
-  const handleQuickContact = (quick: QuickContact) => {
-    const fullContact = contacts.find((c) => c.id === quick.id);
-    if (fullContact) {
-      handleSelectContact(fullContact);
+  const getHeaderTitle = () => {
+    switch (step) {
+      case "recipient":
+        return "Send To";
+      case "amount":
+        return "Enter Amount";
+      case "confirm":
+        return "Confirm";
     }
-  };
-
-  const handleAstraDrop = () => {
-    console.log("Astrâ Drop activated - Finding nearby users...");
-  };
-
-  const handleAmountContinue = () => {
-    if (amount && parseFloat(amount) > 0) {
-      setStep("confirm");
-    }
-  };
-
-  const handleConfirm = () => {
-    console.log("Transaction confirmed:", {
-      recipient: selectedRecipient,
-      amount,
-      coin: selectedCoin.symbol,
-    });
-
-    // Navigate to success screen with transaction data
-    router.replace({
-      pathname: "/transaction-success",
-      params: {
-        amount,
-        coin: selectedCoin.symbol,
-        recipientName: selectedRecipient?.name || "",
-        recipientHandle: selectedRecipient?.handle || "",
-        recipientAvatar: selectedRecipient?.avatar || "",
-        usdValue: `$${(parseFloat(amount) * parseFloat(selectedCoin.value.replace(/,/g, ""))).toLocaleString()}`,
-      },
-    });
   };
 
   return (
@@ -177,38 +68,15 @@ export default function Send() {
         </Pressable>
       </View>
 
-      {step === "recipient" && (
-        <RecipientStep
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          quickContacts={quickContacts}
-          contacts={contacts}
-          onSelectContact={handleSelectContact}
-          onQuickContactPress={handleQuickContact}
-          onAstraDropPress={handleAstraDrop}
-        />
-      )}
-
-      {step === "amount" && selectedRecipient && (
-        <AmountStep
-          recipient={selectedRecipient}
-          coins={coins}
-          selectedCoin={selectedCoin}
-          amount={amount}
-          onSelectCoin={setSelectedCoin}
-          onAmountChange={setAmount}
-          onContinue={handleAmountContinue}
-        />
-      )}
-
-      {step === "confirm" && selectedRecipient && (
-        <ConfirmStep
-          recipient={selectedRecipient}
-          selectedCoin={selectedCoin}
-          amount={amount}
-          onConfirm={handleConfirm}
-        />
-      )}
+      <View className="flex-1">
+        {step === "recipient" && <RecipientStep />}
+        {step === "amount" && (
+          <AmountStep asset={assets.length > 0 ? assets[0] : undefined} />
+        )}
+        {step === "confirm" && (
+          <ConfirmStep priceUsd={assets.length > 0 ? assets[0].priceUsd : 0} />
+        )}
+      </View>
     </SafeAreaView>
   );
 }

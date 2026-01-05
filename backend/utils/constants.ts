@@ -19,4 +19,4 @@ export const DEFAULT_ASSET_IDS = ["bitcoin", "ethereum", "solana"];
 export const VS_CURRENCY = "usd";
 
 // RPC Endpoints
-export const RPC_URL = `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`;
+export const RPC_URL = `https://base-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`;

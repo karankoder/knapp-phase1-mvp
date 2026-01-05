@@ -70,13 +70,13 @@ class WalletService {
 
     const balanceEth = ethers.formatEther(balanceWei);
 
-    // For M1 (Sepolia), we only have ETH. Future updates can add ERC-20 tokens here.
+    // For M1 (Base Sepolia), we only have ETH. Future updates can add ERC-20 tokens here.
     return [
       {
         asset: "ETH",
         balance: parseFloat(balanceEth),
         rawBalance: balanceWei.toString(),
-        network: "Sepolia",
+        network: "Base Sepolia",
       },
     ];
   }
