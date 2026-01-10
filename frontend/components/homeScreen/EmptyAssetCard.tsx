@@ -10,11 +10,11 @@ import Reanimated, {
 
 const AnimatedPressable = Reanimated.createAnimatedComponent(Pressable);
 
-interface EmptyVaultCardProps {
+interface EmptyAssetCardProps {
   onDeposit: () => void;
 }
 
-export const EmptyVaultCard = ({ onDeposit }: EmptyVaultCardProps) => {
+export const EmptyAssetCard = ({ onDeposit }: EmptyAssetCardProps) => {
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const scale = useSharedValue(1);
 

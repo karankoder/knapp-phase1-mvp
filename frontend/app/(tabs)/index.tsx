@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 import ActionButton from "../../components/homeScreen/ActionButton";
 import { BalanceReveal } from "../../components/homeScreen/BalanceReveal";
-import { EmptyVaultCard } from "../../components/homeScreen/EmptyVaultCard";
+import { EmptyAssetCard } from "../../components/homeScreen/EmptyAssetCard";
 import { RecentActivity } from "../../components/homeScreen/RecentActivity";
 import { ScreenWrapper } from "../../components/ScreenWrapper";
 import { ShareModal } from "../../components/homeScreen/ShareModal";
@@ -18,8 +18,7 @@ export default function HomeTab() {
 
   const { assets, totals, isLoading } = useWallet();
 
-  // const isVaultEmpty = assets.length === 0 || totals.balance === 0;
-  const isVaultEmpty = false;
+  const isAssetEmpty = assets.length === 0 || totals.balance === 0;
 
   const changeSymbol = totals.changeAmount >= 0 ? "+" : "-";
   const formattedChangeAmount = `${changeSymbol}$${Math.abs(totals.changeAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -59,9 +58,9 @@ export default function HomeTab() {
             />
           </View>
 
-          {isVaultEmpty ? (
+          {isAssetEmpty ? (
             <View className="mb-6">
-              <EmptyVaultCard onDeposit={handleReceive} />
+              <EmptyAssetCard onDeposit={handleReceive} />
             </View>
           ) : (
             <View className="mb-6">

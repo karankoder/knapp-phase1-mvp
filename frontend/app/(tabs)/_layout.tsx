@@ -1,11 +1,15 @@
 import { LivingBackground } from "@/components/LivingBackground";
 import { Tabs } from "expo-router";
+import { useState } from "react";
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BottomNav } from "../../components/BottomNav";
 import { Header } from "../../components/Header";
+import { ShareModal } from "../../components/homeScreen/ShareModal";
 
 export default function TabsLayout() {
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+
   return (
     <View className="flex-1">
       <LivingBackground />
@@ -14,7 +18,7 @@ export default function TabsLayout() {
         edges={["top"]}
         style={{ backgroundColor: "transparent" }}
       >
-        <Header />
+        <Header onReceive={() => setShareModalOpen(true)} />
 
         <View className="flex-1" style={{ backgroundColor: "transparent" }}>
           <Tabs
@@ -54,6 +58,11 @@ export default function TabsLayout() {
           </Tabs>
         </View>
       </SafeAreaView>
+
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+      />
     </View>
   );
 }

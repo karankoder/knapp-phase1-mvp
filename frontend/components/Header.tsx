@@ -3,13 +3,17 @@ import { usePathname, useRouter } from "expo-router";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 
-export const Header = () => {
+interface HeaderProps {
+  onReceive?: () => void;
+}
+
+export const Header = ({ onReceive }: HeaderProps) => {
   const pathname = usePathname();
   const router = useRouter();
   const isHomePage = pathname === "/";
 
   const handleReceive = () => {
-    console.log("Receive pressed");
+    onReceive?.();
   };
 
   const handleSend = () => {
