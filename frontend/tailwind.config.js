@@ -3,6 +3,13 @@ module.exports = {
   presets: [require("nativewind/preset")],
   theme: {
     extend: {
+      fontSize: {
+        xxs: "0.70rem", // 11.2px (custom)
+        tiny: "0.95rem", // 15.2px (custom)
+        md: "1.075rem", // 17.2px (custom)
+        xlg: "1.18rem", // 18.88px (custom)
+        xxl: "1.35rem", // 21.6px (custom)
+      },
       colors: {
         background: "#070609",
         foreground: "#EAE0CA",

@@ -105,7 +105,10 @@ export function ShareModal({ isOpen, onClose }: ShareModalProps) {
 
                     <View className="px-8 pb-8 items-center">
                       <Animated.View
-                        entering={ZoomIn.delay(100).springify().damping(15)}
+                        entering={ZoomIn.delay(100)
+                          .springify()
+                          .damping(30)
+                          .stiffness(200)}
                       >
                         <LinearGradient
                           colors={[

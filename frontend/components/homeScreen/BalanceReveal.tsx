@@ -148,19 +148,21 @@ export const BalanceReveal = ({
                 />
               </View>
             ) : (
-              <View className="items-center mb-3 flex-row">
-                <Text
-                  className="font-orbitron-medium text-champagne"
-                  style={{ fontSize: 45 }}
-                >
-                  ${formattedBalance}
-                </Text>
-                <Text
-                  className="font-orbitron-medium text-champagne/60"
-                  style={{ fontSize: 32 }}
-                >
-                  .00
-                </Text>
+              <View className="items-center mb-6">
+                <View className="flex-row items-center justify-center">
+                  <Text
+                    className="font-orbitron-medium text-champagne"
+                    style={{ fontSize: 45 }}
+                  >
+                    ${formattedBalance}
+                  </Text>
+                  <Text
+                    className="font-orbitron-medium text-champagne/60"
+                    style={{ fontSize: 32 }}
+                  >
+                    .00
+                  </Text>
+                </View>
               </View>
             )}
 

@@ -1,13 +1,14 @@
 import { useRouter } from "expo-router";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import React, { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import ActionButton from "../../components/homeScreen/ActionButton";
 import { BalanceReveal } from "../../components/homeScreen/BalanceReveal";
 import { EmptyVaultCard } from "../../components/homeScreen/EmptyVaultCard";
 import { RecentActivity } from "../../components/homeScreen/RecentActivity";
 import { ScreenWrapper } from "../../components/ScreenWrapper";
 import { ShareModal } from "../../components/homeScreen/ShareModal";
+import { WeeklyInsights } from "../../components/weeklyInsights/WeeklyInsights";
 import { useWallet } from "@/hooks/useWallet";
 
 export default function HomeTab() {
@@ -18,7 +19,7 @@ export default function HomeTab() {
   const { assets, totals, isLoading } = useWallet();
 
   // const isVaultEmpty = assets.length === 0 || totals.balance === 0;
-  const isVaultEmpty = true;
+  const isVaultEmpty = false;
 
   const changeSymbol = totals.changeAmount >= 0 ? "+" : "-";
   const formattedChangeAmount = `${changeSymbol}$${Math.abs(totals.changeAmount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -64,14 +65,7 @@ export default function HomeTab() {
             </View>
           ) : (
             <View className="mb-6">
-              <View className="bg-ceramic border border-champagne/20 rounded-xl p-4">
-                <Text className="font-orbitron text-sm font-semibold text-champagne mb-2">
-                  Weekly Insights
-                </Text>
-                <Text className="font-rajdhani text-xs text-muted-foreground">
-                  Your portfolio is up 12.5% this week
-                </Text>
-              </View>
+              <WeeklyInsights />
             </View>
           )}
 
