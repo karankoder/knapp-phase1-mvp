@@ -9,7 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.astra"
     },
     "android": {
       "adaptiveIcon": {
@@ -19,7 +20,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.astra"
     },
     "web": {
       "output": "static",
@@ -38,8 +40,22 @@
           "resizeMode": "contain",
           "backgroundColor": "#070609"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "17.0"
+          }
+        }
       ]
     ],
+    "extra": {
+      "EXPO_PUBLIC_ALCHEMY_API_KEY": "",
+      "router": {
+        "origin": false
+      }
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true

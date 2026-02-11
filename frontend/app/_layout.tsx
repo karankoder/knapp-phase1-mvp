@@ -1,132 +1,104 @@
-import { useAuthStore } from "@/stores/useAuthStore";
-import {
-  Orbitron_400Regular,
-  Orbitron_500Medium,
-  Orbitron_600SemiBold,
-  Orbitron_700Bold,
-} from "@expo-google-fonts/orbitron";
-import {
-  Rajdhani_400Regular,
-  Rajdhani_500Medium,
-  Rajdhani_600SemiBold,
-  Rajdhani_700Bold,
-} from "@expo-google-fonts/rajdhani";
-import { useFonts } from "expo-font";
-import { Stack, useRouter, useSegments } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
-import { AstraAlert } from "../components/alert/AstraAlert";
-import { useAlertStore } from "../stores/useAlertStore";
+import "node-libs-react-native/globals.js";
+import "react-native-get-random-values";
+import "@account-kit/react-native";
+
 import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { Stack, useRouter, useSegments } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import "../shim";
+import { useSignerStatus } from "@account-kit/react-native";
+import { AlchemySignerStatus } from "@account-kit/signer";
+
+import { AlchemyProvider } from "../providers/AlchemyProvider";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { AstraAlert } from "../components/alert/AstraAlert";
 import "./global.css";
+
 SplashScreen.preventAutoHideAsync();
 
+// Routes that are part of the onboarding flow
+const AUTH_ROUTES = ["onboarding", "oauth-callback"];
+// Routes that require authentication
+const PROTECTED_ROUTES = [
+  "(tabs)",
+  "send",
+  "transaction-success",
+  "transaction-detail",
+  "contact-detail",
+];
+
 export default function RootLayout() {
-  const { visible, type, message, duration, hide } = useAlertStore();
+  return (
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000000" }}>
+      <AlchemyProvider>
+        <RootLayoutInner />
+      </AlchemyProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+function RootLayoutInner() {
   const router = useRouter();
   const segments = useSegments();
 
-  const [fontsLoaded] = useFonts({
-    Orbitron_400Regular,
-    Orbitron_500Medium,
-    Orbitron_600SemiBold,
-    Orbitron_700Bold,
-    Rajdhani_400Regular,
-    Rajdhani_500Medium,
-    Rajdhani_600SemiBold,
-    Rajdhani_700Bold,
-  });
-
   const {
     isAuthenticated,
-    loadSession,
     isLoading: isAuthLoading,
+    loadSession,
   } = useAuthStore();
-  const [isReady, setIsReady] = useState(false);
-  const [hasNavigated, setHasNavigated] = useState(false);
+  const { status: signerStatus, isAuthenticating } = useSignerStatus();
+
+  const isSignerConnected = signerStatus === AlchemySignerStatus.CONNECTED;
+  const isFullyAuthenticated = isSignerConnected && isAuthenticated;
+  const isReady = !isAuthLoading;
+
+  const [navigationReady, setNavigationReady] = useState(false);
 
   useEffect(() => {
-    const prepare = async () => {
-      try {
-        await loadSession();
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsReady(true);
-      }
-    };
-    prepare();
+    loadSession();
   }, []);
 
   useEffect(() => {
-    if (!isReady || !fontsLoaded || isAuthLoading) return;
+    if (!isReady) return;
 
-    const inTabsGroup = segments[0] === "(tabs)";
-    const onOnboarding = segments[0] === "onboarding";
-    const onSend = segments[0] === "send";
-    const onTransactionSuccess = segments[0] === "transaction-success";
-    const onTransactionDetail = segments[0] === "transaction-detail";
-    const onContactDetail = segments[0] === "contact-detail";
+    const route = segments[0] as string;
+    const isOnAuthFlow = AUTH_ROUTES.includes(route);
 
-    // Skip navigation if already on a valid screen
-    if (
-      hasNavigated ||
-      inTabsGroup ||
-      onOnboarding ||
-      onSend ||
-      onTransactionSuccess ||
-      onTransactionDetail ||
-      onContactDetail
-    ) {
-      setTimeout(() => {
-        SplashScreen.hideAsync();
-      }, 100);
-      return;
-    }
-
-    if (isAuthenticated) {
-      router.replace("/(tabs)");
-      setHasNavigated(true);
-    } else {
+    if (!isFullyAuthenticated && !isOnAuthFlow) {
       router.replace("/onboarding");
-      setHasNavigated(true);
+    } else if (
+      isFullyAuthenticated &&
+      !PROTECTED_ROUTES.includes(route) &&
+      !isOnAuthFlow
+    ) {
+      router.replace("/(tabs)");
     }
 
-    setTimeout(() => {
-      SplashScreen.hideAsync();
-    }, 100);
-  }, [
-    isReady,
-    fontsLoaded,
-    isAuthenticated,
-    isAuthLoading,
-    segments,
-    hasNavigated,
-  ]);
+    setNavigationReady(true);
+    setTimeout(() => SplashScreen.hideAsync(), 50);
+  }, [isReady, isFullyAuthenticated, segments]);
 
-  if (!isReady || !fontsLoaded || isAuthLoading) {
+  if (!isReady || !navigationReady) {
     return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000000" }}>
-        <View className="flex-1 bg-black items-center justify-center">
-          <ActivityIndicator size="large" color="#FFFFFF" />
-        </View>
-      </GestureHandlerRootView>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#000000",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color="#FFFFFF" />
+      </View>
     );
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#000000" }}>
+    <>
       <StatusBar style="light" translucent backgroundColor="transparent" />
-      <AstraAlert
-        visible={visible}
-        type={type}
-        message={message}
-        duration={duration}
-        onDismiss={hide}
-      />
+
       <Stack
         screenOptions={{
           headerShown: false,
@@ -134,6 +106,7 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: "#000000" },
         }}
       >
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen
           name="(tabs)"
           options={{
@@ -141,12 +114,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: "#000000" },
           }}
         />
-        <Stack.Screen
-          name="onboarding"
-          options={{
-            gestureEnabled: false,
-          }}
-        />
+        <Stack.Screen name="oauth-callback" options={{ headerShown: false }} />
         <Stack.Screen
           name="send"
           options={{
@@ -180,6 +148,6 @@ export default function RootLayout() {
           }}
         />
       </Stack>
-    </GestureHandlerRootView>
+    </>
   );
 }

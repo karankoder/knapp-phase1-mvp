@@ -16,7 +16,7 @@ declare global {
 export const authentication = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   let token;
 
@@ -36,15 +36,21 @@ export const authentication = async (
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
-      select: { id: true, handle: true, email: true, publicAddress: true },
+      select: {
+        id: true,
+        handle: true,
+        email: true,
+        publicAddress: true,
+        smartAccountAddress: true,
+      },
     });
 
     if (!user) {
       return next(
         new ErrorHandler(
           "The user belonging to this token no longer exists",
-          401
-        )
+          401,
+        ),
       );
     }
 

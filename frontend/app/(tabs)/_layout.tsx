@@ -1,3 +1,4 @@
+import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
 import { useState } from "react";
 import { View } from "react-native";
@@ -20,7 +21,7 @@ export default function TabsLayout() {
 
         <View className="flex-1" style={{ backgroundColor: "transparent" }}>
           <Tabs
-            tabBar={(props) => <BottomNav {...props} />}
+            tabBar={(props: BottomTabBarProps) => <BottomNav {...props} />}
             screenOptions={{
               headerShown: false,
             }}

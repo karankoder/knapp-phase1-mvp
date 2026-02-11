@@ -1,9 +1,19 @@
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MotiView } from "moti";
-import { Check, ChevronRight } from "lucide-react-native";
+import { Check, ChevronRight, AlertCircle } from "lucide-react-native";
 import { CrownIcon } from "./CrownIcon";
 import { COLORS } from "@/utils/constants";
+import { useState, useEffect, useCallback } from "react";
+import { useUser, useSmartAccountClient } from "@account-kit/react-native";
+import { AuthService } from "@/services/auth.service";
+import debounce from "@/utils/debounce";
 
 interface IdentityScreenProps {
   handle: string;
@@ -17,6 +27,81 @@ export const IdentityScreen = ({
   onFinish,
 }: IdentityScreenProps) => {
   const isValid = handle.length >= 3;
+  const [isChecking, setIsChecking] = useState(false);
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const user = useUser();
+  const { client } = useSmartAccountClient({
+    type: "ModularAccountV2",
+  });
+
+  // Debounced handle availability check
+  const checkHandleAvailability = useCallback(
+    debounce(async (h: string) => {
+      if (h.length < 3) {
+        setIsAvailable(null);
+        return;
+      }
+      setIsChecking(true);
+      try {
+        const available = await AuthService.checkHandle(h);
+        setIsAvailable(available);
+      } catch {
+        setIsAvailable(null);
+      } finally {
+        setIsChecking(false);
+      }
+    }, 500),
+    [],
+  );
+
+  useEffect(() => {
+    setIsAvailable(null);
+    setError(null);
+    if (handle.length >= 3) {
+      checkHandleAvailability(handle);
+    }
+  }, [handle]);
+
+  const handleFinish = async () => {
+    if (!isValid || !isAvailable) return;
+
+    setIsRegistering(true);
+    setError(null);
+
+    try {
+      const smartAccountAddress = client?.account?.address;
+      const signerAddress = user?.address;
+      const email = user?.email;
+
+      if (!signerAddress) {
+        setError("Wallet not ready. Please wait...");
+        setIsRegistering(false);
+        return;
+      }
+
+      await AuthService.register({
+        handle,
+        smartAccountAddress: smartAccountAddress || undefined,
+        signerAddress,
+        email: email || undefined,
+        authProvider: "social",
+      });
+
+      onFinish();
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        "Registration failed. Please try again.";
+      setError(message);
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const canSubmit = isValid && isAvailable === true && !isRegistering;
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center px-8">
@@ -54,17 +139,27 @@ export const IdentityScreen = ({
               autoCapitalize="none"
               autoCorrect={false}
             />
-            {isValid && (
-              <MotiView
-                from={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: "spring", damping: 15 }}
-              >
-                <Check size={20} color={COLORS.checkmark} />
-              </MotiView>
+            {isChecking && (
+              <ActivityIndicator size="small" color={COLORS.white} />
+            )}
+            {!isChecking && isAvailable === true && isValid && (
+              <Check size={20} color={COLORS.checkmark} />
+            )}
+            {!isChecking && isAvailable === false && isValid && (
+              <AlertCircle size={20} color="#EF4444" />
             )}
           </View>
         </View>
+
+        {isAvailable === false && isValid && (
+          <Text className="text-red-400 text-xs mt-2 px-1">
+            This handle is already taken
+          </Text>
+        )}
+
+        {error && (
+          <Text className="text-red-400 text-xs mt-2 px-1">{error}</Text>
+        )}
       </MotiView>
 
       <MotiView
@@ -73,24 +168,33 @@ export const IdentityScreen = ({
         transition={{ type: "timing", duration: 300, delay: 400 }}
       >
         <TouchableOpacity
-          onPress={onFinish}
-          disabled={!isValid}
+          onPress={handleFinish}
+          disabled={!canSubmit}
           activeOpacity={0.9}
           className={`mt-8 px-14 py-4 flex-row items-center gap-2 ${
-            isValid ? "bg-white" : "bg-transparent border border-white/20"
+            canSubmit ? "bg-white" : "bg-transparent border border-white/20"
           }`}
         >
-          <Text
-            className={`text-base font-medium ${
-              isValid ? "text-black" : "text-white"
-            }`}
-          >
-            Get Started
-          </Text>
-          <ChevronRight
-            size={20}
-            color={isValid ? COLORS.black : COLORS.white}
-          />
+          {isRegistering ? (
+            <ActivityIndicator
+              size="small"
+              color={canSubmit ? COLORS.black : COLORS.white}
+            />
+          ) : (
+            <>
+              <Text
+                className={`text-base font-medium ${
+                  canSubmit ? "text-black" : "text-white"
+                }`}
+              >
+                Get Started
+              </Text>
+              <ChevronRight
+                size={20}
+                color={canSubmit ? COLORS.black : COLORS.white}
+              />
+            </>
+          )}
         </TouchableOpacity>
       </MotiView>
     </SafeAreaView>

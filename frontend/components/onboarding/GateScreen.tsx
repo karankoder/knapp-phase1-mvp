@@ -1,14 +1,57 @@
-import { Text, TouchableOpacity, Image } from "react-native";
+import { Text, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MotiView } from "moti";
 import { CrownIcon } from "./CrownIcon";
 import { COLORS } from "@/utils/constants";
+import { useAuthenticate } from "@account-kit/react-native";
+import { useState } from "react";
 
 interface GateScreenProps {
-  onSocialAuth: (provider: "google" | "apple") => void;
+  onAuthSuccess: () => void;
+  isCheckingBackend?: boolean;
 }
 
-export const GateScreen = ({ onSocialAuth }: GateScreenProps) => {
+export const GateScreen = ({
+  onAuthSuccess,
+  isCheckingBackend = false,
+}: GateScreenProps) => {
+  const { authenticate } = useAuthenticate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const showLoading = isLoading || isCheckingBackend;
+
+  const handleSocialAuth = async (provider: "google" | "apple") => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      authenticate(
+        {
+          type: "oauth",
+          authProviderId: provider,
+          mode: "redirect",
+          redirectUrl: "astra://oauth-callback",
+        },
+        {
+          onSuccess: () => {
+            setIsLoading(false);
+            onAuthSuccess();
+          },
+          onError: (err) => {
+            setIsLoading(false);
+            const msg = err instanceof Error ? err.message : String(err);
+            setError(msg);
+          },
+        },
+      );
+    } catch (err) {
+      setIsLoading(false);
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(msg);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 items-center justify-center px-8">
       <MotiView
@@ -33,9 +76,12 @@ export const GateScreen = ({ onSocialAuth }: GateScreenProps) => {
         className="w-full max-w-[320px] gap-3"
       >
         <TouchableOpacity
-          onPress={() => onSocialAuth("google")}
+          onPress={() => handleSocialAuth("google")}
           activeOpacity={0.8}
-          className="w-full py-4 px-6 bg-transparent border border-white/30 flex-row items-center justify-center gap-3"
+          disabled={showLoading}
+          className={`w-full py-4 px-6 bg-transparent border border-white/30 flex-row items-center justify-center gap-3 ${
+            showLoading ? "opacity-50" : ""
+          }`}
         >
           <Image
             source={require("@/assets/images/google-logo.png")}
@@ -48,9 +94,12 @@ export const GateScreen = ({ onSocialAuth }: GateScreenProps) => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          onPress={() => onSocialAuth("apple")}
+          onPress={() => handleSocialAuth("apple")}
           activeOpacity={0.8}
-          className="w-full py-4 px-6 bg-transparent border border-white/30 flex-row items-center justify-center gap-3"
+          disabled={showLoading}
+          className={`w-full py-4 px-6 bg-transparent border border-white/30 flex-row items-center justify-center gap-3 ${
+            showLoading ? "opacity-50" : ""
+          }`}
         >
           <Image
             source={require("@/assets/images/apple-logo.png")}
@@ -61,6 +110,23 @@ export const GateScreen = ({ onSocialAuth }: GateScreenProps) => {
             Continue with Apple
           </Text>
         </TouchableOpacity>
+
+        {showLoading && (
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="items-center mt-4"
+          >
+            <ActivityIndicator size="small" color={COLORS.white} />
+            <Text className="text-white/60 text-xs mt-2">
+              {isCheckingBackend ? "Verifying account..." : "Authenticating..."}
+            </Text>
+          </MotiView>
+        )}
+
+        {error && (
+          <Text className="text-red-400 text-xs text-center mt-2">{error}</Text>
+        )}
       </MotiView>
     </SafeAreaView>
   );

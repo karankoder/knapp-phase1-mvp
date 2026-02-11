@@ -6,20 +6,39 @@ import { ErrorHandler } from "../utils/errorHandler";
 export const authController = {
   register: catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
-      const { handle, publicAddress, signature, timestamp } = req.body;
+      const {
+        handle,
+        signerAddress,
+        smartAccountAddress,
+        email,
+        authProvider,
+      } = req.body;
 
-      if (!handle || !publicAddress || !signature || !timestamp) {
+      if (!handle || !signerAddress) {
+        throw new ErrorHandler("Please provide handle and signerAddress", 400);
+      }
+
+      // Validate handle format
+      if (handle.length < 3 || handle.length > 20) {
         throw new ErrorHandler(
-          "Please provide handle, publicAddress, signature, and timestamp",
-          400
+          "Handle must be between 3 and 20 characters",
+          400,
+        );
+      }
+
+      if (!/^[a-z0-9_]+$/.test(handle)) {
+        throw new ErrorHandler(
+          "Handle can only contain lowercase letters, numbers, and underscores",
+          400,
         );
       }
 
       const { user, token } = await authService.register(
         handle,
-        publicAddress,
-        signature,
-        timestamp
+        signerAddress,
+        smartAccountAddress,
+        email,
+        authProvider,
       );
 
       res.status(201).json({
@@ -28,24 +47,17 @@ export const authController = {
         token,
         user,
       });
-    }
+    },
   ),
 
   login: catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const { publicAddress, signature, timestamp } = req.body;
+    const { signerAddress } = req.body;
 
-    if (!publicAddress || !signature || !timestamp) {
-      throw new ErrorHandler(
-        "Please provide publicAddress, signature, and timestamp",
-        400
-      );
+    if (!signerAddress) {
+      throw new ErrorHandler("Please provide signerAddress", 400);
     }
 
-    const { user, token } = await authService.login(
-      publicAddress,
-      signature,
-      timestamp
-    );
+    const { user, token } = await authService.login(signerAddress);
 
     res.status(200).json({
       success: true,
@@ -54,4 +66,21 @@ export const authController = {
       user,
     });
   }),
+
+  checkHandle: catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { handle } = req.params;
+
+      if (!handle || handle.length < 3) {
+        throw new ErrorHandler("Handle must be at least 3 characters", 400);
+      }
+
+      const available = await authService.checkHandle(handle);
+
+      res.status(200).json({
+        success: true,
+        available,
+      });
+    },
+  ),
 };

@@ -5,7 +5,10 @@ interface UserProfile {
   id: string;
   handle: string;
   publicAddress: string;
+  smartAccountAddress?: string;
+  email?: string;
   profilePicUrl?: string;
+  authProvider?: string;
 }
 
 interface AuthState {
@@ -17,9 +20,10 @@ interface AuthState {
   setAuth: (user: UserProfile, token: string) => Promise<void>;
   logout: () => Promise<void>;
   loadSession: () => Promise<void>;
+  updateUser: (updates: Partial<UserProfile>) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   isAuthenticated: false,
@@ -44,8 +48,6 @@ export const useAuthStore = create<AuthState>((set) => ({
       const token = await SecureStore.getItemAsync("auth_token");
       const userStr = await SecureStore.getItemAsync("user_profile");
 
-      console.log("userStr:", userStr);
-
       if (token && userStr) {
         set({
           token,
@@ -57,6 +59,15 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.error("Failed to load session", e);
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  updateUser: (updates) => {
+    const currentUser = get().user;
+    if (currentUser) {
+      const updatedUser = { ...currentUser, ...updates };
+      set({ user: updatedUser });
+      SecureStore.setItemAsync("user_profile", JSON.stringify(updatedUser));
     }
   },
 }));
