@@ -1,22 +1,73 @@
 import { ArrowRight, Search, X, Wallet } from "lucide-react-native";
 import { Pressable, Text, TextInput, View, ScrollView } from "react-native";
 import { MotiView } from "moti";
-import { Contact } from "@/app/send";
+import { useEffect, useCallback } from "react";
+import { Contact, useContactStore } from "@/stores/useContactStore";
+import { ContactEmptyStates } from "./ContactEmptyStates";
+import { ContactsLoading } from "./ContactsLoading";
+import { useAuthStore } from "@/stores/useAuthStore";
+import debounce from "@/utils/debounce";
 import { COLORS } from "@/utils/constants";
 
 interface ContactsListProps {
-  contacts: Contact[];
   searchQuery: string;
   onSearchChange: (text: string) => void;
   onSelectContact: (contact: Contact) => void;
 }
 
 export const ContactsList = ({
-  contacts,
   searchQuery,
   onSearchChange,
   onSelectContact,
 }: ContactsListProps) => {
+  const { user } = useAuthStore();
+  const {
+    recentContacts,
+    searchResults,
+    isLoadingRecents,
+    isLoadingSearch,
+    searchError,
+    searchContacts,
+    getRecentContacts,
+  } = useContactStore();
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      if (query.trim()) {
+        await searchContacts(query);
+      }
+    }, 500),
+    [],
+  );
+
+  useEffect(() => {
+    getRecentContacts();
+  }, []);
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      debouncedSearch(searchQuery);
+    }
+  }, [searchQuery, debouncedSearch]);
+
+  const displayContacts = searchQuery ? searchResults : recentContacts;
+  const isLoading = searchQuery ? isLoadingSearch : isLoadingRecents;
+  const hasQuery = searchQuery.trim().length > 0;
+  const showResults = displayContacts.length > 0;
+
+  const handleRetry = () => {
+    if (hasQuery) {
+      searchContacts(searchQuery);
+    } else {
+      getRecentContacts();
+    }
+  };
+
+  const handleInvite = () => {
+    // TODO: Implement invite functionality
+    console.log("Invite user:", searchQuery);
+  };
   return (
     <MotiView
       from={{ opacity: 0, translateY: -20 }}
@@ -63,55 +114,65 @@ export const ContactsList = ({
         </View>
       </Pressable>
 
-      {contacts.length > 0 && (
-        <Text className="text-sm font-medium uppercase mb-3 text-muted tracking-widest">
-          {searchQuery ? "Matching Contacts" : "Recent Contacts"}
-        </Text>
-      )}
-
-      {contacts.length > 0 ? (
-        <ScrollView
-          style={{ maxHeight: 320 }}
-          showsVerticalScrollIndicator={true}
-          nestedScrollEnabled={true}
-        >
-          <View style={{ gap: 8 }}>
-            {contacts.map((contact) => (
-              <Pressable
-                key={contact.id}
-                onPress={() => onSelectContact(contact)}
-                className="flex-row items-center gap-3 p-4 rounded-2xl border border-white/15 bg-white/5 active:opacity-70"
-              >
-                <View className="w-10 h-10 rounded-full items-center justify-center bg-white/10">
-                  <Text className="text-xs font-bold text-white">
-                    {contact.avatar}
-                  </Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="text-base font-medium text-platinum">
-                    {contact.name}
-                  </Text>
-                  <Text className="text-sm text-muted/80">
-                    {contact.handle}
-                  </Text>
-                </View>
-                <ArrowRight size={18} color="rgba(245, 245, 240, 0.5)" />
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+      {isLoading ? (
+        <View>
+          <Text className="text-sm font-medium uppercase mb-3 text-muted tracking-widest">
+            {hasQuery ? "Searching..." : "Loading Contacts..."}
+          </Text>
+          <ContactsLoading count={3} />
+        </View>
+      ) : showResults ? (
+        <View>
+          <Text className="text-sm font-medium uppercase mb-3 text-muted tracking-widest">
+            {hasQuery ? "Search Results" : "Recent Contacts"}
+          </Text>
+          <ScrollView
+            style={{ maxHeight: 320 }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+          >
+            <View style={{ gap: 8 }}>
+              {displayContacts.map((contact) => (
+                <Pressable
+                  key={contact.id}
+                  onPress={() => onSelectContact(contact)}
+                  className="flex-row items-center gap-3 p-4 rounded-2xl border border-white/15 bg-white/5 active:opacity-70"
+                >
+                  <View className="w-10 h-10 rounded-full items-center justify-center bg-white/10">
+                    {contact.profilePicUrl ? (
+                      <Text className="text-xs font-bold text-white">
+                        {contact.handle.slice(0, 2).toUpperCase()}
+                      </Text>
+                    ) : (
+                      <Text className="text-xs font-bold text-white">
+                        {contact.handle.slice(0, 2).toUpperCase()}
+                      </Text>
+                    )}
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-base font-medium text-platinum">
+                      {contact.name || contact.handle}
+                    </Text>
+                    <Text className="text-sm text-muted/80">
+                      @{contact.handle}
+                    </Text>
+                  </View>
+                  <ArrowRight size={18} color="rgba(245, 245, 240, 0.5)" />
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      ) : searchError ? (
+        <ContactEmptyStates type="network-error" onRetry={handleRetry} />
+      ) : hasQuery ? (
+        <ContactEmptyStates
+          type="no-search-results"
+          searchQuery={searchQuery}
+          onInvite={handleInvite}
+        />
       ) : (
-        searchQuery &&
-        !searchQuery.startsWith("@") && (
-          <View className="text-center py-20 items-center">
-            <Text className="text-base text-white/50">
-              No contacts found for "{searchQuery}"
-            </Text>
-            <Text className="text-sm mt-1 text-white/30">
-              Try searching with @handle
-            </Text>
-          </View>
-        )
+        <ContactEmptyStates type="no-contacts" userHandle={user?.handle} />
       )}
     </MotiView>
   );

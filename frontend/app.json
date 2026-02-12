@@ -51,10 +51,7 @@
       ]
     ],
     "extra": {
-      "EXPO_PUBLIC_ALCHEMY_API_KEY": "",
-      "router": {
-        "origin": false
-      }
+      "router": { "origin": false }
     },
     "experiments": {
       "typedRoutes": true,

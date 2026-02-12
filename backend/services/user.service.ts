@@ -29,7 +29,7 @@ class UserService {
       email?: string;
       profilePicUrl?: string;
       displayName?: string;
-    }
+    },
   ) {
     if (data.handle) {
       const handleExists = await prisma.user.findFirst({
@@ -103,6 +103,7 @@ class UserService {
         displayName: true,
         profilePicUrl: true,
         publicAddress: true,
+        smartAccountAddress: true,
       },
     });
 
@@ -124,6 +125,7 @@ class UserService {
             displayName: true,
             profilePicUrl: true,
             publicAddress: true,
+            smartAccountAddress: true,
           },
         },
       },
@@ -132,6 +134,32 @@ class UserService {
     });
 
     return recentTx.map((tx) => tx.receiver!);
+  }
+
+  public async getUserByHandle(
+    handle: string,
+    includePrivate: boolean = false,
+  ) {
+    const selectFields = {
+      id: true,
+      handle: true,
+      displayName: true,
+      profilePicUrl: true,
+      publicAddress: true,
+      smartAccountAddress: true,
+      ...(includePrivate && { email: true }),
+    };
+
+    const user = await prisma.user.findUnique({
+      where: { handle: handle.toLowerCase() },
+      select: selectFields,
+    });
+
+    if (!user) {
+      throw new ErrorHandler("User not found", 404);
+    }
+
+    return user;
   }
 }
 

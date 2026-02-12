@@ -24,6 +24,10 @@ export const AlchemyProvider = ({
     sessionConfig: {
       expirationTimeMs: 1000 * 60 * 60 * 24 * 7,
     },
+
+    policyId:
+      Constants.expoConfig?.extra?.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID ??
+      undefined,
   });
 
   return (

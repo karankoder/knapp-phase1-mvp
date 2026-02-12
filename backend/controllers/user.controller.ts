@@ -36,7 +36,7 @@ export const userController = {
         message: "Profile updated successfully",
         user: updatedUser,
       });
-    }
+    },
   ),
   checkHandleAvailability: catchAsync(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -46,14 +46,14 @@ export const userController = {
         throw new ErrorHandler("Handle is required", 400);
       }
       const isAvailable = await userService.checkHandleAvailability(
-        handle.toLowerCase()
+        handle.toLowerCase(),
       );
 
       res.status(200).json({
         success: true,
         available: isAvailable,
       });
-    }
+    },
   ),
 
   search: catchAsync(
@@ -70,7 +70,7 @@ export const userController = {
         success: true,
         users,
       });
-    }
+    },
   ),
 
   getQuickContacts: catchAsync(async (req: Request, res: Response) => {
@@ -81,4 +81,30 @@ export const userController = {
       contacts,
     });
   }),
+
+  getUserByHandle: catchAsync(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { handle } = req.params;
+      const { includeAddress } = req.query;
+
+      if (!handle) {
+        throw new ErrorHandler("Handle is required", 400);
+      }
+
+      const user = await userService.getUserByHandle(handle.toLowerCase());
+
+      if (includeAddress === "true") {
+        res.status(200).json({
+          success: true,
+          address: user.smartAccountAddress || user.publicAddress,
+          user,
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          user,
+        });
+      }
+    },
+  ),
 };

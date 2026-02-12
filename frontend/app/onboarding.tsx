@@ -48,6 +48,7 @@ export default function Onboarding() {
           router.replace("/(tabs)");
         }, 600);
       } catch {
+        // Todo: We can add one more API  to check the user
         setStep("identity");
       } finally {
         setIsCheckingBackend(false);
@@ -58,10 +59,6 @@ export default function Onboarding() {
       checkExistingUser();
     }
   }, [signerConnected, user]);
-
-  const handleAuthSuccess = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
 
   const handleFinish = () => {
     setIsVaultOpening(true);
@@ -84,10 +81,7 @@ export default function Onboarding() {
       {isVaultOpening && <VaultOpeningAnimation />}
 
       {step === "gate" && !isVaultOpening && (
-        <GateScreen
-          onAuthSuccess={handleAuthSuccess}
-          isCheckingBackend={isCheckingBackend || isAuthenticating}
-        />
+        <GateScreen isCheckingBackend={isCheckingBackend || isAuthenticating} />
       )}
 
       {step === "identity" && !isVaultOpening && (

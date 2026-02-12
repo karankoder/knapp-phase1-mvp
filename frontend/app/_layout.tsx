@@ -13,7 +13,7 @@ import { AlchemySignerStatus } from "@account-kit/signer";
 
 import { AlchemyProvider } from "../providers/AlchemyProvider";
 import { useAuthStore } from "@/stores/useAuthStore";
-import { AstraAlert } from "../components/alert/AstraAlert";
+
 import "./global.css";
 
 SplashScreen.preventAutoHideAsync();

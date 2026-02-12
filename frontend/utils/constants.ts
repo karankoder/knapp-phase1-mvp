@@ -19,3 +19,33 @@ export const COLORS = {
   muted: "#8a8375",
   emarald: "#10b981",
 };
+
+// Default assets to always show in the app
+export const DEFAULT_ASSETS = [
+  {
+    symbol: "ETH" as const,
+    name: "Ethereum",
+    balance: "0.0",
+    balanceWei: "0",
+    usdValue: "$0.00",
+    decimals: 18,
+  },
+  {
+    symbol: "USDC" as const,
+    name: "USD Coin",
+    contractAddress: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    balance: "0.00",
+    balanceWei: "0",
+    usdValue: "$0.00",
+    decimals: 6,
+  },
+  {
+    symbol: "USDT" as const,
+    name: "Tether USD",
+    contractAddress: "0x7c6b91D9Be155A6Db01f749217d76fF02A7227F2",
+    balance: "0.00",
+    balanceWei: "0",
+    usdValue: "$0.00",
+    decimals: 6,
+  },
+] as const;

@@ -1,11 +1,27 @@
 import { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { MotiView } from "moti";
-import { ChevronDown, AlertCircle } from "lucide-react-native";
+import { AlertCircle } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { SwipeToSend } from "./SwipeToSend";
-import { Contact, DUMMY_COINS } from "@/app/send";
+import { BalanceLoader } from "./BalanceLoader";
+import { Contact } from "@/stores/useContactStore";
+import { useWalletStore, Token } from "@/stores/useWalletStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useSmartAccountService } from "@/services/smartAccount.service";
+import {
+  useTransactionService,
+  SendTransactionRequest,
+} from "@/services/transaction.service";
 import { COLORS } from "@/utils/constants";
+import {
+  formatTokenAmount,
+  formatCurrency,
+  calculatePercentageAmount,
+  validateBalance,
+  parseAmount,
+} from "@/utils/format";
 
 interface AmountStepProps {
   recipient: Contact;
@@ -15,43 +31,111 @@ const QUICK_AMOUNTS = ["25%", "50%", "75%", "MAX"];
 
 export const AmountStep = ({ recipient }: AmountStepProps) => {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const {
+    assets,
+    isLoadingBalances,
+    refreshBalances,
+    setWalletAddress,
+    getAssetBySymbol,
+  } = useWalletStore();
+  const {
+    isLoading: isTransactionLoading,
+    error: transactionError,
+    clearError,
+  } = useTransactionStore();
+
+  const smartAccountService = useSmartAccountService();
+  const transactionService = useTransactionService(smartAccountService);
+
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [selectedCoin, setSelectedCoin] = useState(DUMMY_COINS[0]);
-  const [insufficientBalance, setInsufficientBalance] = useState(false);
+  const [selectedToken, setSelectedToken] = useState<Token>(assets[0]);
+  const [isSending, setIsSending] = useState(false);
 
-  const balanceValue = parseFloat(selectedCoin.balance.replace(/,/g, ""));
+  const handleAmountChange = (text: string) => {
+    const cleanText = text.replace(/[^0-9.]/g, "");
 
-  // Validate balance whenever amount changes
-  useEffect(() => {
-    const amountValue = parseFloat(amount) || 0;
-    setInsufficientBalance(amountValue > balanceValue);
-  }, [amount, balanceValue]);
-
-  const handleQuickAmount = (percentage: string) => {
-    const balance = parseFloat(selectedCoin.balance.replace(/,/g, ""));
-    const multiplier = percentage === "MAX" ? 1 : parseInt(percentage) / 100;
-    setAmount((balance * multiplier).toFixed(4));
+    const parts = cleanText.split(".");
+    if (parts.length <= 2) {
+      const formatted =
+        parts.length === 2 ? `${parts[0]}.${parts[1]}` : parts[0];
+      setAmount(formatted);
+    }
   };
 
-  const isValidAmount = Boolean(amount && parseFloat(amount) > 0);
-
-  const handleSendComplete = () => {
-    const amountValue = parseFloat(amount) || 0;
-
-    // Final balance check before transaction
-    if (amountValue > balanceValue) {
-      return;
+  useEffect(() => {
+    if (user?.publicAddress) {
+      setWalletAddress(user.publicAddress, user.smartAccountAddress);
+      refreshBalances();
     }
+  }, [user]);
 
-    if (amount && amountValue > 0) {
-      console.log("Send completed:", {
-        recipient,
-        amount,
-        coin: selectedCoin.symbol,
+  useEffect(() => {
+    const updatedToken = getAssetBySymbol(selectedToken.symbol);
+    if (updatedToken) {
+      setSelectedToken(updatedToken);
+    }
+  }, [assets]);
+
+  const currentBalance = parseAmount(selectedToken.balance);
+  const amountValue = parseAmount(amount);
+  const balanceValidation = validateBalance(amountValue, currentBalance);
+
+  const handleQuickAmount = (percentage: string) => {
+    const calculatedAmount = calculatePercentageAmount(
+      percentage,
+      currentBalance,
+    );
+    setAmount(calculatedAmount.toString());
+  };
+
+  const isValidAmount = amountValue > 0 && balanceValidation.isValid;
+  const canSend =
+    isValidAmount && !isSending && smartAccountService && transactionService;
+
+  const handleSendComplete = async () => {
+    if (!canSend) return;
+
+    clearError();
+    setIsSending(true);
+
+    try {
+      const recipientAddr = recipient.smartAccountAddress!!;
+
+      const transactionRequest: SendTransactionRequest = {
+        recipientAddress: recipientAddr,
+        recipientHandle: recipient.handle,
+        recipientName: recipient.name,
+        amount: amountValue.toString(),
+        tokenSymbol: selectedToken.symbol,
+        tokenAddress: selectedToken.contractAddress,
+        decimals: selectedToken.decimals,
+        usdValue: selectedToken.usdValue,
         note: note || undefined,
-      });
-      router.push("/transaction-success");
+      };
+
+      const result =
+        await transactionService.sendTransaction(transactionRequest);
+
+      if (result.success) {
+        router.push({
+          pathname: "/transaction-success",
+          params: {
+            transactionId: result.transactionId,
+            hash: result.hash || "",
+            recipient: recipient.handle,
+            amount: amountValue.toString(),
+            token: selectedToken.symbol,
+          },
+        });
+      } else {
+        throw new Error(result.error || "Transaction failed");
+      }
+    } catch (error: any) {
+      // Error is stored in transaction store
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -73,14 +157,16 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
         >
           <View className="w-10 h-10 rounded-full items-center justify-center bg-white/10">
             <Text className="text-xs font-bold text-white">
-              {recipient.avatar}
+              {recipient.name
+                ? recipient.name.slice(0, 2).toUpperCase()
+                : recipient.handle.slice(0, 2).toUpperCase()}
             </Text>
           </View>
           <View>
             <Text className="text-base font-medium text-white">
-              {recipient.name}
+              {recipient.name || recipient.handle}
             </Text>
-            <Text className="text-sm text-white/50">{recipient.handle}</Text>
+            <Text className="text-sm text-white/50">@{recipient.handle}</Text>
           </View>
         </View>
       </MotiView>
@@ -94,42 +180,63 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
         <Text className="text-sm font-medium uppercase mb-3 text-muted tracking-widest">
           Select Asset
         </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
-        >
-          {DUMMY_COINS.map((coin) => (
-            <Pressable
-              key={coin.symbol}
-              onPress={() => setSelectedCoin(coin)}
-              className="px-5 py-3 rounded-2xl active:opacity-80"
-              style={{
-                backgroundColor:
-                  selectedCoin.symbol === coin.symbol
-                    ? COLORS.white
-                    : "rgba(255, 255, 255, 0.03)",
-                borderWidth: 1,
-                borderColor:
-                  selectedCoin.symbol === coin.symbol
-                    ? COLORS.white
-                    : "rgba(255, 255, 255, 0.1)",
-              }}
-            >
-              <Text
-                className="text-sm font-medium"
+        {isLoadingBalances ? (
+          <View className="flex-row gap-2">
+            {[1, 2].map((i) => (
+              <View
+                key={i}
+                className="px-5 py-3 rounded-2xl border border-white/10 flex-row items-center justify-center"
+                style={{ backgroundColor: "rgba(255, 255, 255, 0.03)" }}
+              >
+                <BalanceLoader width={40} height={16} />
+              </View>
+            ))}
+          </View>
+        ) : assets.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8, paddingBottom: 8 }}
+          >
+            {assets.map((token) => (
+              <Pressable
+                key={token.symbol}
+                onPress={() => {
+                  const asset = getAssetBySymbol(token.symbol);
+                  if (asset) setSelectedToken(asset);
+                }}
+                className="px-5 py-3 rounded-2xl active:opacity-80"
                 style={{
-                  color:
-                    selectedCoin.symbol === coin.symbol
-                      ? COLORS.black
-                      : COLORS.white,
+                  backgroundColor:
+                    selectedToken.symbol === token.symbol
+                      ? COLORS.white
+                      : "rgba(255, 255, 255, 0.03)",
+                  borderWidth: 1,
+                  borderColor:
+                    selectedToken.symbol === token.symbol
+                      ? COLORS.white
+                      : "rgba(255, 255, 255, 0.1)",
                 }}
               >
-                {coin.symbol}
-              </Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+                <Text
+                  className="text-sm font-medium"
+                  style={{
+                    color:
+                      selectedToken.symbol === token.symbol
+                        ? COLORS.black
+                        : COLORS.white,
+                  }}
+                >
+                  {token.symbol}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : (
+          <View className="flex-row items-center justify-center py-6 px-4 rounded-2xl border border-white/10 bg-white/5">
+            <Text className="text-center text-muted">Loading assets...</Text>
+          </View>
+        )}
       </MotiView>
 
       <MotiView
@@ -141,10 +248,12 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
         <View className="relative inline-block">
           <TextInput
             value={amount}
-            onChangeText={setAmount}
+            onChangeText={handleAmountChange}
             placeholder="0.00"
             placeholderTextColor="rgba(255, 255, 255, 0.2)"
             keyboardType="decimal-pad"
+            inputMode="decimal"
+            maxLength={15}
             className="text-5xl font-light text-center w-full"
             style={{
               maxWidth: 200,
@@ -152,9 +261,24 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
             }}
           />
         </View>
-        <Text className="text-base mt-2 text-muted">
-          {selectedCoin.symbol} · Balance: {selectedCoin.balance}
-        </Text>
+        {isLoadingBalances ? (
+          <View className="flex-row items-center justify-center gap-2 mt-2">
+            <BalanceLoader width={80} height={16} />
+            <Text className="text-base text-muted"> · Balance: </Text>
+            <BalanceLoader width={60} height={16} />
+          </View>
+        ) : (
+          <Text className="text-base mt-2 text-muted">
+            {formatTokenAmount(
+              parseAmount(selectedToken.balance),
+              selectedToken.symbol,
+            )}{" "}
+            · Balance:{" "}
+            {formatCurrency(
+              parseAmount(selectedToken.usdValue.replace(/[$,]/g, "")),
+            )}
+          </Text>
+        )}
       </MotiView>
 
       <MotiView
@@ -167,9 +291,11 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
           <Pressable
             key={pct}
             onPress={() => handleQuickAmount(pct)}
+            disabled={isLoadingBalances}
             className="px-4 py-2 rounded-2xl active:opacity-70 border border-muted/40"
             style={{
               backgroundColor: "rgba(255, 255, 255, 0.05)",
+              opacity: isLoadingBalances ? 0.5 : 1,
             }}
           >
             <Text className="text-xs font-medium text-muted">{pct}</Text>
@@ -195,7 +321,21 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
         />
       </MotiView>
 
-      {insufficientBalance && (
+      {/* Transaction Error Display */}
+      {transactionError && (
+        <MotiView
+          from={{ opacity: 0, translateY: -5 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          className="flex-row items-center justify-center gap-2 mb-4 p-3 rounded-2xl bg-bitcoin/10 border border-bitcoin/30"
+        >
+          <AlertCircle size={16} color={COLORS.bitcoinOrange} />
+          <Text className="text-sm text-bitcoin flex-1">
+            {transactionError}
+          </Text>
+        </MotiView>
+      )}
+
+      {!balanceValidation.isValid && amountValue > 0 && (
         <MotiView
           from={{ opacity: 0, translateY: -5 }}
           animate={{ opacity: 1, translateY: 0 }}
@@ -203,7 +343,7 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
         >
           <AlertCircle size={16} color={COLORS.bitcoinOrange} />
           <Text className="text-sm text-bitcoin">
-            Insufficient Balance. Please top up your wallet.
+            {balanceValidation.message}
           </Text>
         </MotiView>
       )}
@@ -230,8 +370,18 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
       >
         <SwipeToSend
           onComplete={handleSendComplete}
-          disabled={!isValidAmount || insufficientBalance}
-          label={insufficientBalance ? "Insufficient Balance" : "Swipe to Send"}
+          disabled={!canSend || isLoadingBalances}
+          label={
+            isSending
+              ? "Sending Transaction..."
+              : !smartAccountService
+                ? "Wallet Not Connected"
+                : isLoadingBalances
+                  ? "Loading Balances..."
+                  : !balanceValidation.isValid && amountValue > 0
+                    ? balanceValidation.message
+                    : "Swipe to Send"
+          }
         />
       </MotiView>
     </ScrollView>

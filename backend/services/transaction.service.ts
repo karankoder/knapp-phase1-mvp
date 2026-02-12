@@ -2,10 +2,8 @@ import { ethers } from "ethers";
 import prisma from "../config/prisma";
 import { TxStatus } from "../generated/prisma";
 import { ErrorHandler } from "../utils/errorHandler";
-import { ALCHEMY_URL, RPC_URL } from "../utils/constants";
+import { ALCHEMY_URL } from "../utils/constants";
 import axios from "axios";
-
-const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 interface AlchemyTransfer {
   blockNum: string;
@@ -32,6 +30,7 @@ class TransactionService {
         id: true,
         handle: true,
         publicAddress: true,
+        smartAccountAddress: true,
         displayName: true,
         profilePicUrl: true,
       },
@@ -55,10 +54,9 @@ class TransactionService {
     userNote?: string;
   }) {
     const normalizedTxHash = data.txHash.toLowerCase();
-    const normalizedSenderAddress =
-      data.senderProfile.publicAddress.toLowerCase();
     const normalizedReceiverAddress = data.receiverAddress.toLowerCase();
 
+    // Check if this transaction has already been synced
     const existingTx = await prisma.transaction.findUnique({
       where: { txHash: normalizedTxHash },
     });
@@ -67,52 +65,56 @@ class TransactionService {
       throw new ErrorHandler("Transaction already synced", 409);
     }
 
-    const tx = await provider.getTransaction(normalizedTxHash);
+    // Use Alchemy RPC to verify the transaction exists on-chain
+    const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL);
+    const receipt =
+      await alchemyProvider.getTransactionReceipt(normalizedTxHash);
 
-    if (!tx) {
-      throw new ErrorHandler("Transaction hash not found on the network", 404);
-    }
-
-    if (!tx.from || tx.from.toLowerCase() !== normalizedSenderAddress) {
+    if (!receipt) {
       throw new ErrorHandler(
-        "Transaction signer does not match the logged-in user",
-        403
+        "Transaction receipt not found on the network. It may still be pending.",
+        404,
       );
     }
 
-    if (!tx.to || tx.to.toLowerCase() !== normalizedReceiverAddress) {
-      throw new ErrorHandler(
-        "Transaction receiver on-chain does not match the request",
-        400
-      );
+    if (receipt.status !== 1) {
+      throw new ErrorHandler("Transaction failed on-chain", 400);
     }
 
-    if (tx.value.toString() !== data.rawAmountWei) {
-      throw new ErrorHandler(
-        "Transaction amount on-chain does not match the declared amount",
-        400
-      );
-    }
+    // ERC-4337 UserOperation validation note:
+    // For smart account (ModularAccountV2) transactions sent via Alchemy's Bundler:
+    //   - tx.from = bundler address (NOT the user's EOA or smart account)
+    //   - tx.to   = EntryPoint contract (NOT the actual recipient)
+    //   - tx.value = 0 (actual value transfer is an internal transaction)
+    // Therefore, we CANNOT validate sender/receiver/amount from the outer transaction.
+    // receipt.status === 1 confirms the UserOperation executed successfully.
+    // TODO: For enhanced validation, use Alchemy's alchemy_getAssetTransfers API
+    // to verify the internal transfer details (sender SMA → receiver SMA).
 
+    // Validate that rawAmountWei and amount are consistent
     const calculatedDecimal = ethers.formatEther(data.rawAmountWei);
-
-    if (parseFloat(calculatedDecimal) !== parseFloat(data.amount.toString())) {
+    if (
+      data.assetSymbol === "ETH" &&
+      Math.abs(
+        parseFloat(calculatedDecimal) - parseFloat(data.amount.toString()),
+      ) > 0.0001
+    ) {
       throw new ErrorHandler(
         `Decimal amount mismatch. Wei: ${data.rawAmountWei} equals ${calculatedDecimal} ETH, but received ${data.amount}`,
-        400
+        400,
       );
     }
 
-    const receiver = await prisma.user.findUnique({
-      where: { publicAddress: normalizedReceiverAddress },
+    // Look up receiver by BOTH publicAddress (signer EOA) and smartAccountAddress (SMA)
+    // since the frontend sends to the recipient's smart account address
+    const receiver = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { publicAddress: normalizedReceiverAddress },
+          { smartAccountAddress: normalizedReceiverAddress },
+        ],
+      },
     });
-
-    // if (!receiver) {
-    //   // If the receiver isn't in our app, we can't link them in the relational DB easily.
-    //   // For Phase 1, we assume all transfers are between app users.
-    //   // If we want to support sending to external wallets, we'd need to make receiverId nullable in schema.
-    //   throw new ErrorHandler("Receiver is not a registered user", 404);
-    // }
 
     const transaction = await prisma.transaction.create({
       data: {
@@ -137,7 +139,7 @@ class TransactionService {
   }
 
   private async fetchAlchemyHistory(
-    address: string
+    address: string,
   ): Promise<AlchemyTransfer[]> {
     const commonParams = {
       fromBlock: "0x0",
@@ -159,11 +161,11 @@ class TransactionService {
       const [sentRes, receivedRes] = await Promise.all([
         axios.post(
           ALCHEMY_URL,
-          makeRequest({ ...commonParams, fromAddress: address })
+          makeRequest({ ...commonParams, fromAddress: address }),
         ),
         axios.post(
           ALCHEMY_URL,
-          makeRequest({ ...commonParams, toAddress: address })
+          makeRequest({ ...commonParams, toAddress: address }),
         ),
       ]);
 
@@ -208,7 +210,7 @@ class TransactionService {
     ]);
 
     const dbTxHashes = new Set(
-      dbTransactions.map((tx) => tx.txHash.toLowerCase())
+      dbTransactions.map((tx) => tx.txHash.toLowerCase()),
     );
 
     // Normalize Alchemy Data to match Prisma Shape
@@ -244,7 +246,7 @@ class TransactionService {
       });
 
     const unifiedHistory = [...dbTransactions, ...externalTransactions].sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
     );
 
     return unifiedHistory;
@@ -275,7 +277,7 @@ class TransactionService {
     transactionId: string,
     status?: TxStatus,
     category?: string,
-    userNote?: string
+    userNote?: string,
   ) {
     const existingTx = await prisma.transaction.findUnique({
       where: { id: transactionId },

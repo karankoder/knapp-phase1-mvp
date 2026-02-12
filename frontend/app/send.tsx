@@ -5,31 +5,10 @@ import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { AmountStep } from "../components/send/AmountStep";
 import { RecipientStep } from "../components/send/RecipientStep";
+import { Contact } from "../stores/useContactStore";
 import { COLORS } from "@/utils/constants";
 
 type Step = "recipient" | "amount";
-
-// Dummy contacts data
-export const DUMMY_CONTACTS = [
-  { id: "1", name: "Alex Chen", handle: "@alexc", avatar: "AC" },
-  { id: "2", name: "Maria Silva", handle: "@msilva", avatar: "MS" },
-  { id: "3", name: "John Doe", handle: "@johnd", avatar: "JD" },
-  { id: "4", name: "Sarah Kim", handle: "@sarahk", avatar: "SK" },
-  { id: "5", name: "Marcus Johnson", handle: "@marcusj", avatar: "MJ" },
-];
-
-// Dummy coins data
-export const DUMMY_COINS = [
-  { symbol: "ETH", name: "Ethereum", balance: "4.2", value: "$9,870" },
-  { symbol: "USDT", name: "Tether USD", balance: "2,500.00", value: "$2,500" },
-];
-
-export interface Contact {
-  id: string;
-  name: string;
-  handle: string;
-  avatar: string;
-}
 
 export default function Send() {
   const router = useRouter();

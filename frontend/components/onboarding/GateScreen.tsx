@@ -5,21 +5,22 @@ import { CrownIcon } from "./CrownIcon";
 import { COLORS } from "@/utils/constants";
 import { useAuthenticate } from "@account-kit/react-native";
 import { useState } from "react";
+import * as Haptics from "expo-haptics";
 
 interface GateScreenProps {
-  onAuthSuccess: () => void;
   isCheckingBackend?: boolean;
 }
 
-export const GateScreen = ({
-  onAuthSuccess,
-  isCheckingBackend = false,
-}: GateScreenProps) => {
+export const GateScreen = ({ isCheckingBackend = false }: GateScreenProps) => {
   const { authenticate } = useAuthenticate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const showLoading = isLoading || isCheckingBackend;
+
+  const handleAuthSuccess = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
 
   const handleSocialAuth = async (provider: "google" | "apple") => {
     setIsLoading(true);
@@ -36,7 +37,7 @@ export const GateScreen = ({
         {
           onSuccess: () => {
             setIsLoading(false);
-            onAuthSuccess();
+            handleAuthSuccess();
           },
           onError: (err) => {
             setIsLoading(false);

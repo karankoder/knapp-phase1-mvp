@@ -14,4 +14,6 @@ router.get("/search", authentication, userController.search);
 
 router.get("/quick-contacts", authentication, userController.getQuickContacts);
 
+router.get("/handle/:handle", authentication, userController.getUserByHandle);
+
 export default router;
