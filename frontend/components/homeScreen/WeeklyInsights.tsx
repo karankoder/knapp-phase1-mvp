@@ -5,21 +5,42 @@ import { ArrowUpRight, ArrowDownLeft } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { SparklineChart } from "./SparklineChart";
 import { COLORS } from "@/utils/constants";
-
-const TOTAL_SENT = 550;
-const TOTAL_RECEIVED = 600;
+import { useTransactionHistoryStore } from "@/stores/useTransactionHistoryStore";
 
 export const WeeklyInsights = () => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { displayHistory } = useTransactionHistoryStore();
+
+  const { totalSent, totalReceived } = useMemo(() => {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+    let sent = 0;
+    let received = 0;
+
+    displayHistory.forEach((tx) => {
+      const txDate = new Date(tx.timestamp);
+      if (txDate >= oneWeekAgo) {
+        const amount = parseFloat(tx.amount);
+        if (tx.type === "send") {
+          sent += amount;
+        } else if (tx.type === "receive") {
+          received += amount;
+        }
+      }
+    });
+
+    return { totalSent: sent, totalReceived: received };
+  }, [displayHistory]);
 
   const weeklyFlow = useMemo(() => {
-    const received: number = TOTAL_RECEIVED;
-    const sent: number = TOTAL_SENT;
+    const received: number = totalReceived;
+    const sent: number = totalSent;
     if (received === 0 && sent === 0) return 0;
     const diff = received - sent;
     const total = Math.max(received, sent);
     return total > 0 ? (diff / total) * 100 : 0;
-  }, []);
+  }, [totalReceived, totalSent]);
 
   const isFlowPositive = weeklyFlow >= 0;
 
@@ -108,7 +129,7 @@ export const WeeklyInsights = () => {
                     fontVariant: ["tabular-nums"],
                   }}
                 >
-                  ${TOTAL_RECEIVED}
+                  ${totalReceived.toFixed(2)}
                 </Text>
               </View>
 
@@ -126,7 +147,7 @@ export const WeeklyInsights = () => {
                   className="text-lg font-semibold text-white/80"
                   style={{ fontVariant: ["tabular-nums"] }}
                 >
-                  ${TOTAL_SENT}
+                  ${totalSent.toFixed(2)}
                 </Text>
               </View>
             </View>

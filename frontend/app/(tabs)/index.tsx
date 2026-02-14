@@ -1,64 +1,39 @@
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useMemo } from "react";
 import { ScrollView, View } from "react-native";
 import { ShareModal } from "../../components/homeScreen/ShareModal";
 import { WeeklyInsights } from "../../components/homeScreen/WeeklyInsights";
 import { QuickSendBar } from "../../components/homeScreen/QuickSendBar";
 import { BalanceRevealSection } from "../../components/homeScreen/BalanceRevealSection";
 import { ActionButtons } from "../../components/homeScreen/ActionButtons";
+import { ActivityList } from "../../components/homeScreen/ActivityList";
 import {
-  ActivityList,
-  Transaction,
-} from "../../components/homeScreen/ActivityList";
+  useTransactionHistoryStore,
+  DisplayTransaction,
+} from "@/stores/useTransactionHistoryStore";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { Contact } from "@/stores/useContactStore";
+import { useState } from "react";
 
-const transactions: Transaction[] = [
-  {
-    id: "1",
-    name: "Marcus Chen",
-    address: "0x71C7656EC7ab88b098defB751B7401B5f6d89742",
-    date: "Today, 2:34 PM",
-    amount: "+$1,038.00",
-    type: "receive",
-  },
-  {
-    id: "2",
-    name: "Sent to Marcus",
-    address: "0xAb5801a7D398351b8bE11C439e05C5B3259aeCd8",
-    date: "Yesterday",
-    amount: "-$150.00",
-    type: "send",
-    category: "transfer",
-  },
-  {
-    id: "3",
-    name: "Elena Rodriguez",
-    address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-    date: "Dec 14",
-    amount: "+$720.00",
-    type: "receive",
-  },
-  {
-    id: "4",
-    name: "James Wilson",
-    address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    date: "Dec 13",
-    amount: "-$500.00",
-    type: "send",
-    category: "shopping",
-  },
-  {
-    id: "5",
-    name: "Sarah Kim",
-    address: "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
-    date: "Dec 12",
-    amount: "+$246.25",
-    type: "receive",
-  },
-];
+const ACTIVITY_LIMIT = 5;
 
 export default function HomeTab() {
   const router = useRouter();
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const { isAuthenticated } = useAuthStore();
+  const { displayHistory, isLoading, fetchHistory } =
+    useTransactionHistoryStore();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchHistory();
+    }
+  }, [isAuthenticated]);
+
+  const recentActivity = useMemo(
+    () => displayHistory.slice(0, ACTIVITY_LIMIT),
+    [displayHistory],
+  );
 
   const handleQuickSearch = (query: string) => {
     router.push({
@@ -67,22 +42,29 @@ export default function HomeTab() {
     });
   };
 
-  const handleQuickSend = (contact: { address: string; name: string }) => {
-    router.push("/send");
+  const handleQuickSend = (contact: Contact) => {
+    router.push({
+      pathname: "/send",
+      params: {
+        preSelectedContactId: contact.id,
+        contactHandle: contact.handle,
+      },
+    });
   };
 
-  const handleTransactionPress = (transaction: Transaction) => {
+  const handleTransactionPress = (transaction: DisplayTransaction) => {
     router.push({
       pathname: "/transaction-detail",
       params: {
         id: transaction.id,
-        name: transaction.name,
-        address: transaction.address || "",
-        amount: transaction.amount,
-        date: transaction.date,
+        name: transaction.counterparty.name,
+        address: transaction.counterparty.address || "",
+        amount: transaction.formattedAmount,
+        date: transaction.displayDate,
         type: transaction.type,
         category: transaction.category || "",
-        note: transaction.note || "",
+        note: transaction.userNote || "",
+        isInApp: transaction.isInApp.toString(),
       },
     });
   };
@@ -114,7 +96,8 @@ export default function HomeTab() {
               </View>
 
               <ActivityList
-                transactions={transactions}
+                transactions={recentActivity}
+                isLoading={isLoading}
                 onTransactionPress={handleTransactionPress}
               />
             </View>

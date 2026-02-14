@@ -5,6 +5,7 @@ import { ArrowLeft, Send } from "lucide-react-native";
 import { MotiView } from "moti";
 import { FinancialSummary } from "@/components/activity/FinancialSummary";
 import { COLORS } from "@/utils/constants";
+import { DisplayTransaction } from "@/stores/useTransactionHistoryStore";
 
 const truncateAddress = (address: string) => {
   if (!address || address.length < 12) return address;
@@ -41,17 +42,19 @@ export default function ContactDetail() {
     });
   };
 
-  const handleTransactionClick = (tx: any) => {
+  const handleTransactionClick = (tx: DisplayTransaction) => {
     router.push({
       pathname: "/transaction-detail",
       params: {
         id: tx.id,
-        name: tx.name,
-        address: tx.address,
-        amount: tx.amount,
-        date: tx.date,
+        name: tx.counterparty.name,
+        address: tx.counterparty.address,
+        amount: tx.formattedAmount,
+        date: tx.displayDate,
         type: tx.type,
-        note: tx.note || "",
+        note: tx.userNote || "",
+        category: tx.category || "",
+        isInApp: tx.isInApp.toString(),
       },
     });
   };
@@ -125,64 +128,66 @@ export default function ContactDetail() {
 
           {/* Transaction Chat Bubbles */}
           <View className="mb-24 px-6">
-            {contact.transactions.map((tx: any, index: number) => {
-              const isReceive = tx.type === "receive";
+            {contact.transactions.map(
+              (tx: DisplayTransaction, index: number) => {
+                const isReceive = tx.type === "receive";
 
-              return (
-                <MotiView
-                  key={tx.id}
-                  from={{ opacity: 0, translateY: 10 }}
-                  animate={{ opacity: 1, translateY: 0 }}
-                  transition={{
-                    type: "timing",
-                    duration: 150,
-                    delay: index * 30,
-                  }}
-                  className={`mb-3 ${isReceive ? "items-start" : "items-end"}`}
-                >
-                  <Pressable
-                    onPress={() => handleTransactionClick(tx)}
-                    className="max-w-[75%] p-4 rounded-2xl active:opacity-70"
-                    style={{
-                      backgroundColor: isReceive
-                        ? `${COLORS.accent}1A`
-                        : "rgba(255, 255, 255, 0.05)",
-                      borderWidth: 1,
-                      borderColor: isReceive
-                        ? `${COLORS.accent}33`
-                        : "rgba(255, 255, 255, 0.15)",
+                return (
+                  <MotiView
+                    key={tx.id}
+                    from={{ opacity: 0, translateY: 10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    transition={{
+                      type: "timing",
+                      duration: 150,
+                      delay: index * 30,
                     }}
+                    className={`mb-3 ${isReceive ? "items-start" : "items-end"}`}
                   >
-                    <Text
-                      className="font-mono text-lg font-medium mb-1"
+                    <Pressable
+                      onPress={() => handleTransactionClick(tx)}
+                      className="max-w-[75%] p-4 rounded-2xl active:opacity-70"
                       style={{
-                        color: isReceive
-                          ? COLORS.accent
-                          : "rgba(255, 255, 255, 0.6)",
+                        backgroundColor: isReceive
+                          ? `${COLORS.accent}1A`
+                          : "rgba(255, 255, 255, 0.05)",
+                        borderWidth: 1,
+                        borderColor: isReceive
+                          ? `${COLORS.accent}33`
+                          : "rgba(255, 255, 255, 0.15)",
                       }}
                     >
-                      {tx.amount}
-                    </Text>
-
-                    {tx.note && (
                       <Text
-                        className="text-sm mb-2"
-                        style={{ color: "rgba(255, 255, 255, 0.6)" }}
+                        className="font-mono text-lg font-medium mb-1"
+                        style={{
+                          color: isReceive
+                            ? COLORS.accent
+                            : "rgba(255, 255, 255, 0.6)",
+                        }}
                       >
-                        {tx.note}
+                        {tx.formattedAmount}
                       </Text>
-                    )}
 
-                    <Text
-                      className="text-[10px]"
-                      style={{ color: "rgba(255, 255, 255, 0.3)" }}
-                    >
-                      {tx.date} • {tx.time}
-                    </Text>
-                  </Pressable>
-                </MotiView>
-              );
-            })}
+                      {tx.userNote && (
+                        <Text
+                          className="text-sm mb-2"
+                          style={{ color: "rgba(255, 255, 255, 0.6)" }}
+                        >
+                          {tx.userNote}
+                        </Text>
+                      )}
+
+                      <Text
+                        className="text-[10px]"
+                        style={{ color: "rgba(255, 255, 255, 0.3)" }}
+                      >
+                        {tx.displayDateShort} • {tx.displayTime}
+                      </Text>
+                    </Pressable>
+                  </MotiView>
+                );
+              },
+            )}
           </View>
         </ScrollView>
 

@@ -1,8 +1,8 @@
-import { ChevronRight, Scale, ArrowUp, ArrowDown } from "lucide-react-native";
+import { ChevronRight, Scale } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import { MotiView } from "moti";
 import { COLORS } from "@/utils/constants";
-import { ContactThread } from "./ContactsTab";
+import { ContactThread } from "@/stores/useTransactionHistoryStore";
 
 interface ContactThreadItemProps {
   thread: ContactThread;
@@ -10,21 +10,11 @@ interface ContactThreadItemProps {
   onPress: (thread: ContactThread) => void;
 }
 
-const truncateAddress = (address: string) => {
-  if (!address || address.length < 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
-};
-
 export const ContactThreadItem = ({
   thread,
   index,
   onPress,
 }: ContactThreadItemProps) => {
-  const netBalance = thread.totalReceived - thread.totalSent;
-  const isSettled = Math.abs(netBalance) < 0.01;
-  const youOwe = netBalance > 0;
-  const absoluteBalance = Math.abs(netBalance);
-
   return (
     <MotiView
       from={{ opacity: 0, translateY: 10 }}
@@ -49,7 +39,7 @@ export const ContactThreadItem = ({
                   className="text-base font-medium text-white"
                   numberOfLines={1}
                 >
-                  @{thread.displayName.toLowerCase().replace(/\s/g, "")}
+                  {thread.displayName}
                 </Text>
                 {/* <Text className="text-xs font-mono ml-2 text-white/30">
                   {truncateAddress(thread.address)}
@@ -70,41 +60,15 @@ export const ContactThreadItem = ({
                 {thread.transactionCount !== 1 ? "s" : ""}
               </Text>
 
-              {isSettled ? (
-                <View className="flex-row items-center gap-1">
-                  <Scale size={12} color="rgba(255, 255, 255, 0.3)" />
-                  <Text
-                    className="font-mono text-[10px]"
-                    style={{ color: "rgba(255, 255, 255, 0.3)" }}
-                  >
-                    Square
-                  </Text>
-                </View>
-              ) : (
-                <View className="flex-row items-center gap-1">
-                  {youOwe ? (
-                    <>
-                      <ArrowUp size={14} color="rgba(255, 255, 255, 0.5)" />
-                      <Text className="font-mono text-sm text-white/50">
-                        -$
-                        {absoluteBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })}
-                      </Text>
-                    </>
-                  ) : (
-                    <>
-                      <ArrowDown size={14} color={COLORS.accent} />
-                      <Text className="font-mono text-sm text-accent">
-                        +$
-                        {absoluteBalance.toLocaleString(undefined, {
-                          maximumFractionDigits: 0,
-                        })}
-                      </Text>
-                    </>
-                  )}
-                </View>
-              )}
+              <View className="flex-row items-center gap-1">
+                <Scale size={12} color="rgba(255, 255, 255, 0.3)" />
+                <Text
+                  className="font-mono text-[10px]"
+                  style={{ color: "rgba(255, 255, 255, 0.3)" }}
+                >
+                  Square
+                </Text>
+              </View>
             </View>
           </View>
 

@@ -1,29 +1,39 @@
-import { View } from "react-native";
+import { View, Text } from "react-native";
 import { ContactThreadItem } from "./ContactThreadItem";
-import { Transaction } from "./TransactionItem";
+import {
+  DisplayTransaction,
+  ContactThread,
+} from "@/stores/useTransactionHistoryStore";
+import { ActivitySkeleton } from "../homeScreen/ActivitySkeleton";
 
-export interface ContactThread {
-  address: string;
-  displayName: string;
-  lastMessage: string;
-  lastNote: string;
-  lastDate: string;
-  lastTime: string;
-  totalReceived: number;
-  totalSent: number;
-  transactionCount: number;
-  transactions: Transaction[];
-}
+export type { ContactThread };
 
 interface ContactsTabProps {
   contactThreads: ContactThread[];
   onThreadClick: (thread: ContactThread) => void;
+  isLoading?: boolean;
 }
 
 export function ContactsTab({
   contactThreads,
   onThreadClick,
+  isLoading = false,
 }: ContactsTabProps) {
+  if (isLoading) {
+    return <ActivitySkeleton />;
+  }
+
+  if (contactThreads.length === 0) {
+    return (
+      <View className="py-16 items-center">
+        <Text className="text-white/40 text-center">No contacts yet</Text>
+        <Text className="text-white/30 text-sm text-center mt-2">
+          Your transaction contacts will appear here
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View>
       {contactThreads.map((thread, index) => (

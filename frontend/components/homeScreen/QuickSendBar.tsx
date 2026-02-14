@@ -1,51 +1,71 @@
 import { MotiView } from "moti";
 import { Search, X } from "lucide-react-native";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { View, TextInput, TouchableOpacity, Text } from "react-native";
 import { COLORS } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
-
-interface RecentContact {
-  id: string;
-  address: string;
-  name: string;
-  avatar: string;
-}
-
-const recentContacts: RecentContact[] = [
-  {
-    id: "1",
-    address: "0xAb5801a7D398351b8bE11C439e05C5B3259aeCd8",
-    name: "Marcus",
-    avatar: "MA",
-  },
-  {
-    id: "2",
-    address: "0x1f9840a85d5aF5bf1D1762F925BDADdC4201F984",
-    name: "0x1f9...984",
-    avatar: "ET",
-  },
-  {
-    id: "3",
-    address: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
-    name: "0xC02...Cc2",
-    avatar: "US",
-  },
-];
+import { useContactStore, Contact } from "@/stores/useContactStore";
+import debounce from "@/utils/debounce";
 
 interface QuickSendBarProps {
   onSearch: (query: string) => void;
-  onQuickSend: (contact: RecentContact) => void;
+  onQuickSend: (contact: Contact) => void;
 }
 
 export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const {
+    recentContacts,
+    searchResults,
+    isLoadingRecents,
+    isLoadingSearch,
+    getRecentContacts,
+    searchContacts,
+  } = useContactStore();
+
+  useEffect(() => {
+    getRecentContacts();
+  }, []);
+
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      if (query.trim()) {
+        await searchContacts(query);
+      }
+    }, 500),
+    [],
+  );
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      debouncedSearch(searchQuery);
+    }
+  }, [searchQuery, debouncedSearch]);
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+  };
 
   const handleSearchSubmit = () => {
     if (searchQuery.trim()) {
       onSearch(searchQuery.trim());
     }
   };
+
+  const quickContacts = recentContacts.slice(0, 3).map((contact) => ({
+    ...contact,
+    displayName: contact.name || contact.handle,
+    avatar: (contact.name || contact.handle).slice(0, 2).toUpperCase(),
+  }));
+
+  const searchContactsDisplay = searchResults.slice(0, 3).map((contact) => ({
+    ...contact,
+    displayName: contact.name || contact.handle,
+    avatar: (contact.name || contact.handle).slice(0, 2).toUpperCase(),
+  }));
+
+  const displayContacts = searchQuery ? searchContactsDisplay : quickContacts;
+  const isLoading = searchQuery ? isLoadingSearch : isLoadingRecents;
 
   return (
     <View className="gap-4">
@@ -55,9 +75,10 @@ export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
           placeholder="Search @handle or address"
           placeholderTextColor="rgba(255, 255, 255, 0.3)"
           value={searchQuery}
-          onChangeText={setSearchQuery}
+          onChangeText={handleSearchChange}
           onSubmitEditing={handleSearchSubmit}
           returnKeyType="search"
+          autoCapitalize="none"
           className="flex-1 text-white text-base ml-3"
         />
         {searchQuery !== "" && (
@@ -72,39 +93,66 @@ export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
       </View>
 
       <View className="flex-row gap-2">
-        {recentContacts.map((contact, index) => (
-          <MotiView
-            key={contact.id}
-            from={{ opacity: 0, translateY: 5 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 150, delay: index * 30 }}
-            className="flex-1"
-          >
-            <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onQuickSend(contact);
-              }}
-              activeOpacity={0.8}
-              className="flex-col items-center gap-1.5 py-4 bg-white/5 border border-white/15 rounded-3xl"
-            >
-              <View className="w-9 h-9 rounded-full bg-transparent border border-white/20 items-center justify-center">
-                <Text className="text-xs font-medium text-white">
-                  {contact.avatar}
-                </Text>
-              </View>
-              <Text
-                className="text-xs font-medium text-white/50"
-                numberOfLines={1}
-                style={{ maxWidth: 60 }}
+        {isLoading ? (
+          <>
+            {[1, 2, 3].map((i) => (
+              <View
+                key={i}
+                className="flex-1 flex-col items-center gap-1.5 py-4 bg-white/5 border border-white/15 rounded-3xl"
+                pointerEvents="none"
               >
-                {contact.name.length > 8
-                  ? contact.name.slice(0, 7) + "…"
-                  : contact.name}
-              </Text>
-            </TouchableOpacity>
-          </MotiView>
-        ))}
+                <View
+                  className="w-9 h-9 rounded-full bg-white/10"
+                  style={{ opacity: 0.5 }}
+                />
+                <View
+                  className="w-12 h-3 rounded bg-white/10"
+                  style={{ opacity: 0.5 }}
+                />
+              </View>
+            ))}
+          </>
+        ) : (
+          <>
+            {displayContacts.map((contact, index) => (
+              <MotiView
+                key={contact.id}
+                from={{ opacity: 0, translateY: 5 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: "timing",
+                  duration: 150,
+                  delay: index * 30,
+                }}
+                className="flex-1"
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onQuickSend(contact);
+                  }}
+                  activeOpacity={0.8}
+                  className="flex-col items-center gap-1.5 py-4 bg-white/5 border border-white/15 rounded-3xl"
+                >
+                  <View className="w-9 h-9 rounded-full bg-transparent border border-white/20 items-center justify-center">
+                    <Text className="text-xs font-medium text-white">
+                      {contact.avatar}
+                    </Text>
+                  </View>
+                  <Text
+                    className="text-xs font-medium text-white/50"
+                    numberOfLines={1}
+                    style={{ maxWidth: 60 }}
+                  >
+                    {contact.displayName.length > 8
+                      ? contact.displayName.slice(0, 7) + "…"
+                      : contact.displayName}
+                  </Text>
+                </TouchableOpacity>
+              </MotiView>
+            ))}
+          </>
+        )}
       </View>
     </View>
   );

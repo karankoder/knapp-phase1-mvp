@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
   View,
@@ -26,6 +26,8 @@ import { COLORS } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
 import { useAddressNicknames } from "@/hooks/useAddressNicknames";
 import { NicknameEditModal } from "@/components/transaction/NicknameEditModal";
+import { HistoryService } from "@/services/history.service";
+import { useTransactionHistoryStore } from "@/stores/useTransactionHistoryStore";
 
 // Helper to truncate wallet addresses
 const truncateAddress = (address: string) => {
@@ -58,28 +60,39 @@ export default function TransactionDetail() {
     useAddressNicknames();
 
   // Parse transaction data from params
-  const transaction = params.id
-    ? {
-        id: params.id as string,
-        name: params.name as string,
-        address: params.address as string,
-        amount: params.amount as string,
-        date: params.date as string,
-        type: params.type as "receive" | "send",
-        status:
-          (params.status as "Confirmed" | "Pending" | "Failed") || "Confirmed",
-        category: params.category as string,
-        note: params.note as string,
-      }
-    : null;
+  const transaction = useMemo(
+    () =>
+      params.id
+        ? {
+            id: params.id as string,
+            name: params.name as string,
+            address: params.address as string,
+            amount: params.amount as string,
+            date: params.date as string,
+            type: params.type as "receive" | "send",
+            status:
+              (params.status as "Confirmed" | "Pending" | "Failed") ||
+              "Confirmed",
+            category: params.category as string,
+            note: params.note as string,
+            isInApp: params.isInApp === "true",
+          }
+        : null,
+    [params.id],
+  );
 
-  // Reset state when transaction changes
+  // Reset state when transaction ID changes
   useEffect(() => {
     if (transaction) {
-      setSelectedCategory(transaction.category || "other");
+      const validCategories = CATEGORIES.map((c) => c.id);
+      const category =
+        transaction.category && validCategories.includes(transaction.category)
+          ? transaction.category
+          : "other";
+      setSelectedCategory(category);
       setNote(transaction.note || "");
     }
-  }, [transaction]);
+  }, [params.id]);
 
   const handleBack = () => {
     router.back();
@@ -91,18 +104,24 @@ export default function TransactionDetail() {
     setIsSaving(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      await HistoryService.updateTransaction({
+        transactionId: transaction.id,
+        category: selectedCategory,
+        userNote: note,
+      });
 
-    // TODO: Update transaction in store/backend
-    console.log("Save transaction:", {
-      id: transaction.id,
-      category: selectedCategory,
-      note,
-    });
+      // Refresh history to get updated data
+      const { fetchHistory } = useTransactionHistoryStore.getState();
+      await fetchHistory();
 
-    setIsSaving(false);
-    router.back();
+      router.back();
+    } catch (error: any) {
+      console.error("Failed to update transaction:", error);
+      // TODO: Show error toast
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (!transaction) {
@@ -171,22 +190,20 @@ export default function TransactionDetail() {
               <View className="items-center gap-1">
                 <View className="flex-row items-center gap-2">
                   <Text className="text-base text-platinum font-medium">
-                    @
-                    {(hasNickname(transaction.address)
+                    {hasNickname(transaction.address)
                       ? getDisplayName(transaction.address)
-                      : transaction.name
-                    )
-                      .toLowerCase()
-                      .replace(/\s/g, "")}
+                      : transaction.name}
                   </Text>
-                  <TouchableOpacity
-                    onPress={() => setIsNicknameModalOpen(true)}
-                    activeOpacity={0.7}
-                    className="w-7 h-7 rounded-full items-center justify-center border border-platinum/20"
-                    style={{ backgroundColor: "rgba(245, 245, 240, 0.1)" }}
-                  >
-                    <Pencil size={14} color="rgba(245, 245, 240, 0.7)" />
-                  </TouchableOpacity>
+                  {!transaction.isInApp && (
+                    <TouchableOpacity
+                      onPress={() => setIsNicknameModalOpen(true)}
+                      activeOpacity={0.7}
+                      className="w-7 h-7 rounded-full items-center justify-center border border-platinum/20"
+                      style={{ backgroundColor: "rgba(245, 245, 240, 0.1)" }}
+                    >
+                      <Pencil size={14} color="rgba(245, 245, 240, 0.7)" />
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <Text
                   className="text-sm text-white/40"
@@ -197,7 +214,7 @@ export default function TransactionDetail() {
               </View>
             ) : (
               <Text className="text-base text-white/60">
-                @{transaction.name.toLowerCase().replace(/\s/g, "")}
+                {transaction.name}
               </Text>
             )}
           </MotiView>

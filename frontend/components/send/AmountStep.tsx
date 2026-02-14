@@ -32,13 +32,8 @@ const QUICK_AMOUNTS = ["25%", "50%", "75%", "MAX"];
 export const AmountStep = ({ recipient }: AmountStepProps) => {
   const router = useRouter();
   const { user } = useAuthStore();
-  const {
-    assets,
-    isLoadingBalances,
-    refreshBalances,
-    setWalletAddress,
-    getAssetBySymbol,
-  } = useWalletStore();
+  const { assets, isLoadingBalances, refreshBalances, getAssetBySymbol } =
+    useWalletStore();
   const {
     isLoading: isTransactionLoading,
     error: transactionError,
@@ -66,7 +61,6 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
 
   useEffect(() => {
     if (user?.publicAddress) {
-      setWalletAddress(user.publicAddress, user.smartAccountAddress);
       refreshBalances();
     }
   }, [user]);

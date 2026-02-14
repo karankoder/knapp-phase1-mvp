@@ -2,28 +2,14 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import { MotiView } from "moti";
 import { COLORS } from "@/utils/constants";
-
-export interface Transaction {
-  id: string;
-  name: string;
-  address: string;
-  date: string;
-  time: string;
-  amount: string;
-  type: "receive" | "send";
-  note?: string;
-}
+import { DisplayTransaction } from "@/stores/useTransactionHistoryStore";
+import { truncateAddress } from "@/utils/format";
 
 interface TransactionItemProps {
-  transaction: Transaction;
+  transaction: DisplayTransaction;
   index: number;
-  onPress: (transaction: Transaction) => void;
+  onPress: (transaction: DisplayTransaction) => void;
 }
-
-const truncateAddress = (address: string) => {
-  if (!address || address.length < 12) return address;
-  return `${address.slice(0, 6)}....`;
-};
 
 export const TransactionItem = ({
   transaction,
@@ -69,11 +55,13 @@ export const TransactionItem = ({
                   className="text-base font-medium text-white"
                   numberOfLines={1}
                 >
-                  @{transaction.name.toLowerCase().replace(/\s/g, "")}
+                  {transaction.counterparty.name}
                 </Text>
-                <Text className="text-xs font-mono ml-2 text-white/30">
-                  {truncateAddress(transaction.address)}
-                </Text>
+                {transaction.counterparty.showAddress && (
+                  <Text className="text-xs font-mono ml-2 text-white/30">
+                    {truncateAddress(transaction.counterparty.address)}
+                  </Text>
+                )}
               </View>
               <Text
                 className="font-mono text-base ml-2"
@@ -81,15 +69,15 @@ export const TransactionItem = ({
                   color: isReceive ? COLORS.accent : "rgba(255, 255, 255, 0.6)",
                 }}
               >
-                {transaction.amount}
+                {transaction.formattedAmount}
               </Text>
             </View>
             <View className="flex-row items-center justify-between">
               <Text className="text-sm flex-1 text-white/40" numberOfLines={1}>
-                {transaction.note || (isReceive ? "Received" : "Sent")}
+                {transaction.userNote || (isReceive ? "Received" : "Sent")}
               </Text>
               <Text className="text-sm ml-2 text-white/30">
-                {transaction.date}
+                {transaction.displayDateShort}
               </Text>
             </View>
           </View>

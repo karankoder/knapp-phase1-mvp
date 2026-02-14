@@ -140,15 +140,11 @@ export class SmartAccountService {
     }
   }
 
-  /**
-   * Get the smart account address (where funds live).
-   */
   getSmartAccountAddress(): string | undefined {
     return this.client?.account?.address;
   }
 }
 
-// Hook to get smart account service instance
 export const useSmartAccountService = () => {
   const { client } = useSmartAccountClient({
     type: "ModularAccountV2",

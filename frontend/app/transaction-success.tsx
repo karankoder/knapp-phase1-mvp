@@ -3,9 +3,9 @@ import { ProofCardModal } from "@/components/transaction/ProofCardModal";
 import { ShieldIcon } from "@/components/transaction/ShieldIcon";
 import { TransactionReceipt } from "@/components/transaction/TransactionReceipt";
 import { useTransactionStore } from "@/stores/useTransactionStore";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useEffect } from "react";
-import { ScrollView, Share, View, Text } from "react-native";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
+import { useState, useEffect, useCallback } from "react";
+import { ScrollView, Share, View, Text, BackHandler } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS } from "@/utils/constants";
 
@@ -15,11 +15,9 @@ export default function TransactionSuccess() {
   const { getTransactionById } = useTransactionStore();
   const [isProofModalOpen, setIsProofModalOpen] = useState(false);
 
-  // Get transaction data from store using the ID from params
   const transactionId = params.transactionId as string;
   const transaction = transactionId ? getTransactionById(transactionId) : null;
 
-  // Fallback data from URL params if transaction not found in store
   const transactionData = transaction
     ? {
         amount: transaction.amount,
@@ -54,7 +52,6 @@ export default function TransactionSuccess() {
         status: "pending" as const,
       };
 
-  // Show loading if no transaction data available
   if (!transactionData.txHash && !transactionId) {
     return (
       <SafeAreaView className="flex-1 bg-black items-center justify-center">
@@ -82,6 +79,23 @@ export default function TransactionSuccess() {
   const handleBackToDashboard = () => {
     router.replace("/(tabs)");
   };
+
+  // Handle hardware back button to go to home instead of previous screen
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        router.replace("/(tabs)");
+        return true; // Prevent default back behavior
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, []),
+  );
 
   return (
     <SafeAreaView className="flex-1 bg-black" edges={["top"]}>

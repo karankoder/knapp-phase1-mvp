@@ -17,8 +17,13 @@ interface AlchemyTransfer {
   tokenId: string | null;
   asset: string;
   category: string;
+  rawContract: {
+    value: string | null;
+    address: string | null;
+    decimal: string | null;
+  };
   metadata: {
-    blockTimestamp: string; // We need this for sorting
+    blockTimestamp: string;
   };
 }
 
@@ -56,7 +61,6 @@ class TransactionService {
     const normalizedTxHash = data.txHash.toLowerCase();
     const normalizedReceiverAddress = data.receiverAddress.toLowerCase();
 
-    // Check if this transaction has already been synced
     const existingTx = await prisma.transaction.findUnique({
       where: { txHash: normalizedTxHash },
     });
@@ -65,7 +69,6 @@ class TransactionService {
       throw new ErrorHandler("Transaction already synced", 409);
     }
 
-    // Use Alchemy RPC to verify the transaction exists on-chain
     const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL);
     const receipt =
       await alchemyProvider.getTransactionReceipt(normalizedTxHash);
@@ -143,10 +146,12 @@ class TransactionService {
   ): Promise<AlchemyTransfer[]> {
     const commonParams = {
       fromBlock: "0x0",
-      category: ["external", "erc20"],
+      // "internal" is needed for ERC-4337 smart account ETH transfers
+      // (the actual value movement is an internal tx from the SMA)
+      category: ["external", "internal", "erc20"],
       withMetadata: true,
       excludeZeroValue: true,
-      maxCount: "0x3e8",
+      maxCount: "0x64", // 100 results per direction
     };
 
     const makeRequest = (params: any) => ({
@@ -157,7 +162,6 @@ class TransactionService {
     });
 
     try {
-      // Parallel Requests: 1. Sent by User, 2. Received by User
       const [sentRes, receivedRes] = await Promise.all([
         axios.post(
           ALCHEMY_URL,
@@ -172,7 +176,17 @@ class TransactionService {
       const sent = sentRes.data.result?.transfers || [];
       const received = receivedRes.data.result?.transfers || [];
 
-      return [...sent, ...received];
+      // Deduplicate by uniqueId (a transfer can appear in both sent/received)
+      const seen = new Set<string>();
+      const all: AlchemyTransfer[] = [];
+      for (const tx of [...sent, ...received]) {
+        if (!seen.has(tx.uniqueId)) {
+          seen.add(tx.uniqueId);
+          all.push(tx);
+        }
+      }
+
+      return all;
     } catch (error) {
       console.error("Alchemy Fetch Error:", error);
       return [];
@@ -182,14 +196,17 @@ class TransactionService {
   public async getHistory(userId: string) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { publicAddress: true },
+      select: { publicAddress: true, smartAccountAddress: true },
     });
 
-    if (!user || !user.publicAddress) {
-      throw new ErrorHandler("User wallet not found", 404);
+    if (!user) {
+      throw new ErrorHandler("User not found", 404);
     }
 
-    const userAddressLower = user.publicAddress.toLowerCase();
+    // Smart account address is where all funds and transactions live.
+    // Fall back to publicAddress (signer EOA) if SMA not yet set.
+    const walletAddress = user.smartAccountAddress || user.publicAddress;
+    const walletAddressLower = walletAddress.toLowerCase();
 
     // Parallel Fetch: Internal DB & External Blockchain
     const [dbTransactions, alchemyTransactions] = await Promise.all([
@@ -198,55 +215,92 @@ class TransactionService {
         orderBy: { createdAt: "desc" },
         include: {
           sender: {
-            select: { handle: true, profilePicUrl: true, publicAddress: true },
+            select: {
+              handle: true,
+              displayName: true,
+              profilePicUrl: true,
+              publicAddress: true,
+              smartAccountAddress: true,
+            },
           },
           receiver: {
-            select: { handle: true, profilePicUrl: true, publicAddress: true },
+            select: {
+              handle: true,
+              displayName: true,
+              profilePicUrl: true,
+              publicAddress: true,
+              smartAccountAddress: true,
+            },
           },
         },
       }),
 
-      this.fetchAlchemyHistory(user.publicAddress),
+      this.fetchAlchemyHistory(walletAddress),
     ]);
 
     const dbTxHashes = new Set(
       dbTransactions.map((tx) => tx.txHash.toLowerCase()),
     );
 
-    // Normalize Alchemy Data to match Prisma Shape
+    const inAppTransactions = dbTransactions.map((tx) => ({
+      id: tx.id,
+      txHash: tx.txHash,
+      timestamp: tx.createdAt.toISOString(),
+      status: tx.status,
+      amount: tx.amount.toString(),
+      assetSymbol: tx.assetSymbol,
+      category: tx.category,
+      userNote: tx.userNote,
+      type: tx.senderId === userId ? "send" : "receive",
+      isInApp: true,
+      counterparty: {
+        address:
+          tx.senderId === userId
+            ? tx.receiverAddress
+            : tx.sender.smartAccountAddress || tx.sender.publicAddress,
+        handle:
+          tx.senderId === userId
+            ? tx.receiver?.handle || null
+            : tx.sender.handle,
+        displayName:
+          tx.senderId === userId
+            ? tx.receiver?.displayName || null
+            : tx.sender.displayName || null,
+        profilePicUrl:
+          tx.senderId === userId
+            ? tx.receiver?.profilePicUrl || null
+            : tx.sender.profilePicUrl || null,
+      },
+    }));
+
     const externalTransactions = alchemyTransactions
       .filter((tx) => !dbTxHashes.has(tx.hash.toLowerCase()))
       .map((tx) => {
-        const isSend = tx.from.toLowerCase() === userAddressLower;
+        const isSend = tx.from.toLowerCase() === walletAddressLower;
 
         return {
-          id: `ext_${tx.hash}`,
+          id: `ext_${tx.uniqueId}`,
           txHash: tx.hash,
-          createdAt: new Date(tx.metadata.blockTimestamp),
+          timestamp: tx.metadata.blockTimestamp,
           status: "COMPLETED",
           amount: tx.value.toString(),
-          assetSymbol: tx.asset,
-          category: null,
+          assetSymbol: tx.asset || "ETH",
+          category: tx.category, // "external", "internal", or "erc20"
           userNote: null,
-
-          senderId: isSend ? userId : "external",
-          receiverId: isSend ? "external" : userId,
-
-          sender: {
-            publicAddress: tx.from,
+          type: isSend ? "send" : "receive",
+          isInApp: false,
+          counterparty: {
+            address: isSend ? tx.to : tx.from,
             handle: null,
-            profilePicUrl: null,
-          },
-          receiver: {
-            publicAddress: tx.to,
-            handle: null,
+            displayName: null,
             profilePicUrl: null,
           },
         };
       });
 
-    const unifiedHistory = [...dbTransactions, ...externalTransactions].sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    const unifiedHistory = [...inAppTransactions, ...externalTransactions].sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
     );
 
     return unifiedHistory;

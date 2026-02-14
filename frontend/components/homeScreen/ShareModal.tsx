@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useWalletStore } from "@/stores/useWalletStore";
 import { BlurView } from "expo-blur";
 import * as Clipboard from "expo-clipboard";
 import { Check, Copy, ExternalLink, Share2, X } from "lucide-react-native";
@@ -17,10 +18,11 @@ const VANITY_URL_BASE = "atara.money";
 
 export function ShareModal({ isOpen, onClose }: ShareModalProps) {
   const { user } = useAuthStore();
+  const { smartAccountAddress } = useWalletStore();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const WALLET_ADDRESS = "0x1234456789abcdef1234567890abcdef12345678";
+  const WALLET_ADDRESS = smartAccountAddress || "No wallet connected";
   const USER_HANDLE = user?.handle || "thomas";
   const VANITY_URL = `${VANITY_URL_BASE}/${USER_HANDLE}`;
 

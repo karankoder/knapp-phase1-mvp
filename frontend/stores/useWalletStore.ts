@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import { WalletService } from "@/services/wallet.service";
 import { DEFAULT_ASSETS } from "@/utils/constants";
+import { WalletService } from "@/services/wallet.service";
 
 export interface Token {
   symbol: string;
@@ -23,6 +23,11 @@ export interface WalletState {
   chainId: number;
   balanceError: string | null;
 
+  // Portfolio totals
+  totalUSDValue: number;
+  change24h: number;
+  percentChange24h: number;
+
   setWalletAddress: (address: string, smartAccountAddress?: string) => void;
   updateTokenBalances: (tokens: Token[]) => void;
   refreshBalances: () => Promise<void>;
@@ -37,6 +42,9 @@ export const useWalletStore = create<WalletState>((set, get) => ({
   networkName: "Base Sepolia",
   chainId: 84532,
   balanceError: null,
+  totalUSDValue: 0,
+  change24h: 0,
+  percentChange24h: 0,
 
   setWalletAddress: (address: string, smartAccountAddress?: string) => {
     set({
@@ -71,13 +79,42 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     set({ isLoadingBalances: true, balanceError: null });
 
     try {
-      const tokens = await WalletService.getWalletBalances(smartAccountAddress);
-      get().updateTokenBalances(tokens);
-    } catch (error: any) {
-      console.error("Failed to refresh balances from blockchain:", error);
+      const portfolio = await WalletService.getPortfolio();
+
+      // Update portfolio totals
       set({
-        balanceError:
-          error.message || "Failed to load balances from blockchain",
+        totalUSDValue: portfolio.totalUSD,
+        change24h: portfolio.change24h,
+        percentChange24h: portfolio.percentChange24h,
+      });
+
+      // Update individual token balances
+      const updatedAssets = get().assets.map((asset) => {
+        const portfolioToken = portfolio.tokens.find(
+          (t: any) => t.symbol === asset.symbol,
+        );
+
+        if (portfolioToken) {
+          return {
+            ...asset,
+            balance: portfolioToken.balance,
+            usdValue: `$${portfolioToken.usdValue.toFixed(2)}`,
+          };
+        }
+
+        return asset;
+      });
+
+      set({
+        assets: updatedAssets,
+        lastUpdated: new Date(),
+        isLoadingBalances: false,
+        balanceError: null,
+      });
+    } catch (error: any) {
+      console.error("Failed to refresh balances:", error);
+      set({
+        balanceError: error.message || "Failed to load portfolio",
         isLoadingBalances: false,
       });
     }

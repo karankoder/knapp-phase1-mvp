@@ -24,13 +24,9 @@ export const formatTokenAmount = (
     return `${numAmount.toFixed(8)} ${symbol}`;
   }
 
-  const decimals =
-    numAmount < 1 ? Math.min(maxDecimals, 4) : numAmount < 100 ? 4 : 2;
+  const truncated = Math.floor(numAmount * 10000) / 10000;
 
-  return `${numAmount.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: decimals,
-  })} ${symbol}`;
+  return `${truncated.toFixed(4)} ${symbol}`;
 };
 
 export const calculatePercentageAmount = (
@@ -83,4 +79,68 @@ export const formatChange = (
 
   const sign = change >= 0 ? (showSign ? "+" : "") : "";
   return `${sign}${change.toFixed(2)}%`;
+};
+
+export const truncateAddress = (address: string): string => {
+  if (!address || address.length < 12) return address;
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+};
+
+export const formatTimestamp = (timestamp: string): string => {
+  const date = new Date(timestamp);
+  const now = new Date();
+
+  const isToday = date.toDateString() === now.toDateString();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const timeStr = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  if (isToday) return `Today, ${timeStr}`;
+  if (isYesterday) return `Yesterday, ${timeStr}`;
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+export const formatHistoryAmount = (
+  amount: string,
+  assetSymbol: string,
+  type: "send" | "receive",
+): string => {
+  const num = parseFloat(amount);
+  if (isNaN(num)) return `0 ${assetSymbol}`;
+
+  const sign = type === "receive" ? "+" : "-";
+
+  // Smart decimal formatting
+  if (num < 0.0001 && num > 0) return `${sign}${num.toFixed(8)} ${assetSymbol}`;
+  if (num < 1) return `${sign}${num.toFixed(4)} ${assetSymbol}`;
+
+  return `${sign}${num.toFixed(4)} ${assetSymbol}`;
+};
+
+export const getCounterpartyDisplay = (counterparty: {
+  handle: string | null;
+  displayName: string | null;
+  address: string;
+}): { name: string; showAddress: boolean } => {
+  if (counterparty.handle) {
+    return { name: `@${counterparty.handle}`, showAddress: true };
+  }
+
+  if (counterparty.displayName) {
+    return { name: counterparty.displayName, showAddress: true };
+  }
+
+  // Name IS the truncated address, no need to show it twice
+  return { name: truncateAddress(counterparty.address), showAddress: false };
 };

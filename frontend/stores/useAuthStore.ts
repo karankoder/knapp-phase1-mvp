@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
+import { useWalletStore } from "./useWalletStore";
 
 interface UserProfile {
   id: string;
@@ -34,6 +35,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await SecureStore.setItemAsync("user_profile", JSON.stringify(user));
 
     set({ user, token, isAuthenticated: true });
+
+    // Initialize wallet address after login
+    if (user.publicAddress) {
+      useWalletStore
+        .getState()
+        .setWalletAddress(user.publicAddress, user.smartAccountAddress);
+    }
   },
 
   logout: async () => {
@@ -49,11 +57,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const userStr = await SecureStore.getItemAsync("user_profile");
 
       if (token && userStr) {
+        const user = JSON.parse(userStr);
         set({
           token,
-          user: JSON.parse(userStr),
+          user,
           isAuthenticated: true,
         });
+
+        // Initialize wallet address on session restore
+        if (user.publicAddress) {
+          useWalletStore
+            .getState()
+            .setWalletAddress(user.publicAddress, user.smartAccountAddress);
+        }
       }
     } catch (e) {
       console.error("Failed to load session", e);

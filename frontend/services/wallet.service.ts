@@ -1,21 +1,29 @@
-import { Token } from "../stores/useWalletStore";
-import { AlchemyService } from "./blockchain.service";
-import { useSmartAccountService } from "./smartAccount.service";
 import {
   TransactionService,
   SendTransactionRequest,
 } from "./transaction.service";
+import { api } from "./api";
+
+interface PortfolioResponse {
+  totalUSD: number;
+  change24h: number;
+  percentChange24h: number;
+  tokens: Array<{
+    symbol: string;
+    name: string;
+    balance: string;
+    usdValue: number;
+    change24h: number;
+    percentChange24h: number;
+    decimals: number;
+    contractAddress?: string;
+  }>;
+}
 
 export const WalletService = {
-  getWalletBalances: async (address: string): Promise<Token[]> => {
-    const alchemyService = new AlchemyService();
-    const balances = await alchemyService.getAllBalances(
-      address as `0x${string}`,
-    );
-
-    return [balances.ETH, balances.USDT, balances.USDC].filter(
-      (token) => parseFloat(token.balance) > 0,
-    );
+  getPortfolio: async (): Promise<PortfolioResponse> => {
+    const response = await api.get("/wallet/portfolio");
+    return response.data.portfolio;
   },
 
   sendTransaction: async (

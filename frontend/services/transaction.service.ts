@@ -1,4 +1,5 @@
 import { useTransactionStore } from "../stores/useTransactionStore";
+import { useTransactionHistoryStore } from "../stores/useTransactionHistoryStore";
 import { SmartAccountService } from "./smartAccount.service";
 import { api } from "./api";
 
@@ -80,9 +81,14 @@ export class TransactionService {
       markTransactionConfirmed(transactionId, result.hash);
 
       // Sync with backend in background (don't block the UI)
-      this.syncTransactionWithBackend(transactionId).catch((err) =>
-        console.error("Backend sync failed (non-blocking):", err),
-      );
+      this.syncTransactionWithBackend(transactionId)
+        .then(() => {
+          // Auto-refresh history to show new transaction
+          useTransactionHistoryStore.getState().fetchHistory();
+        })
+        .catch((err) =>
+          console.error("Backend sync failed (non-blocking):", err),
+        );
 
       return {
         transactionId,
