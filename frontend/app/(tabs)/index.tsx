@@ -14,8 +14,7 @@ import {
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Contact } from "@/stores/useContactStore";
 import { useState } from "react";
-
-const ACTIVITY_LIMIT = 5;
+import { ACTIVITY_LIMIT } from "@/utils/constants";
 
 export default function HomeTab() {
   const router = useRouter();
@@ -34,23 +33,6 @@ export default function HomeTab() {
     () => displayHistory.slice(0, ACTIVITY_LIMIT),
     [displayHistory],
   );
-
-  const handleQuickSearch = (query: string) => {
-    router.push({
-      pathname: "/send",
-      params: { searchQuery: query },
-    });
-  };
-
-  const handleQuickSend = (contact: Contact) => {
-    router.push({
-      pathname: "/send",
-      params: {
-        preSelectedContactId: contact.id,
-        contactHandle: contact.handle,
-      },
-    });
-  };
 
   const handleTransactionPress = (transaction: DisplayTransaction) => {
     router.push({
@@ -80,10 +62,7 @@ export default function HomeTab() {
           <BalanceRevealSection>
             <View className="mt-4">
               <View className="mb-7">
-                <QuickSendBar
-                  onSearch={handleQuickSearch}
-                  onQuickSend={handleQuickSend}
-                />
+                <QuickSendBar />
               </View>
 
               <ActionButtons

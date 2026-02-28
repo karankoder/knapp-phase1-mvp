@@ -146,9 +146,9 @@ class TransactionService {
   ): Promise<AlchemyTransfer[]> {
     const commonParams = {
       fromBlock: "0x0",
-      // "internal" is needed for ERC-4337 smart account ETH transfers
-      // (the actual value movement is an internal tx from the SMA)
-      category: ["external", "internal", "erc20"],
+      // Note: "internal" is only supported on Ethereum and Polygon mainnets, not on Base Sepolia
+      // Using "external" to fetch all asset transfers including smart account transactions
+      category: ["external"],
       withMetadata: true,
       excludeZeroValue: true,
       maxCount: "0x64", // 100 results per direction
@@ -176,6 +176,19 @@ class TransactionService {
       const sent = sentRes.data.result?.transfers || [];
       const received = receivedRes.data.result?.transfers || [];
 
+      console.log("[Alchemy] Sent transactions:", sent.length);
+      console.log("[Alchemy] Received transactions:", received.length);
+
+      if (sentRes.data.error) {
+        console.error("[Alchemy] Sent request error:", sentRes.data.error);
+      }
+      if (receivedRes.data.error) {
+        console.error(
+          "[Alchemy] Received request error:",
+          receivedRes.data.error,
+        );
+      }
+
       // Deduplicate by uniqueId (a transfer can appear in both sent/received)
       const seen = new Set<string>();
       const all: AlchemyTransfer[] = [];
@@ -186,9 +199,14 @@ class TransactionService {
         }
       }
 
+      console.log("[Alchemy] Deduplicated history count:", all.length);
+      if (all.length === 0) {
+        console.warn("[Alchemy] No transactions found for address:", address);
+      }
+
       return all;
     } catch (error) {
-      console.error("Alchemy Fetch Error:", error);
+      console.error("[Alchemy] Fetch Error:", error);
       return [];
     }
   }

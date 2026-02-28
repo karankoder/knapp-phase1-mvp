@@ -15,7 +15,7 @@ model User {
   smartAccountAddress String?  @unique // ERC-4337 smart account on Base
   authProvider        String?  // google, apple
   profilePicUrl       String?
-  displayName         String?
+  displayName         String?  //TODO: replace it with name
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 

@@ -128,19 +128,18 @@ export const formatHistoryAmount = (
   return `${sign}${num.toFixed(4)} ${assetSymbol}`;
 };
 
-export const getCounterpartyDisplay = (counterparty: {
-  handle: string | null;
-  displayName: string | null;
-  address: string;
-}): { name: string; showAddress: boolean } => {
-  if (counterparty.handle) {
+export const buildTransactionName = (
+  counterparty: { handle: string | null; address: string },
+  isInApp: boolean,
+  nickname?: string | null,
+): { name: string; showAddress: boolean } => {
+  if (isInApp && counterparty.handle) {
     return { name: `@${counterparty.handle}`, showAddress: true };
   }
 
-  if (counterparty.displayName) {
-    return { name: counterparty.displayName, showAddress: true };
+  if (!isInApp && nickname) {
+    return { name: `@${nickname}`, showAddress: true };
   }
 
-  // Name IS the truncated address, no need to show it twice
   return { name: truncateAddress(counterparty.address), showAddress: false };
 };

@@ -6,13 +6,9 @@ import { COLORS } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
 import { useContactStore, Contact } from "@/stores/useContactStore";
 import debounce from "@/utils/debounce";
+import { useRouter } from "expo-router";
 
-interface QuickSendBarProps {
-  onSearch: (query: string) => void;
-  onQuickSend: (contact: Contact) => void;
-}
-
-export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
+export const QuickSendBar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const {
     recentContacts,
@@ -22,6 +18,7 @@ export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
     getRecentContacts,
     searchContacts,
   } = useContactStore();
+  const router = useRouter();
 
   useEffect(() => {
     getRecentContacts();
@@ -42,14 +39,22 @@ export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
     }
   }, [searchQuery, debouncedSearch]);
 
-  const handleSearchChange = (text: string) => {
-    setSearchQuery(text);
+  const handleQuickSend = (contact: Contact) => {
+    router.push({
+      pathname: "/send",
+      params: {
+        contactId: contact.id,
+        contactHandle: contact.handle,
+        contactName: contact.name ?? "",
+        contactAddress: contact.publicAddress,
+        contactSmartAddress: contact.smartAccountAddress,
+        contactProfilePic: contact.profilePicUrl ?? "",
+      },
+    });
   };
 
-  const handleSearchSubmit = () => {
-    if (searchQuery.trim()) {
-      onSearch(searchQuery.trim());
-    }
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
   };
 
   const quickContacts = recentContacts.slice(0, 3).map((contact) => ({
@@ -76,7 +81,6 @@ export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
           placeholderTextColor="rgba(255, 255, 255, 0.3)"
           value={searchQuery}
           onChangeText={handleSearchChange}
-          onSubmitEditing={handleSearchSubmit}
           returnKeyType="search"
           autoCapitalize="none"
           className="flex-1 text-white text-base ml-3"
@@ -129,7 +133,7 @@ export const QuickSendBar = ({ onSearch, onQuickSend }: QuickSendBarProps) => {
                 <TouchableOpacity
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    onQuickSend(contact);
+                    handleQuickSend(contact);
                   }}
                   activeOpacity={0.8}
                   className="flex-col items-center gap-1.5 py-4 bg-white/5 border border-white/15 rounded-3xl"

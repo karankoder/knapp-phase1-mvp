@@ -2,9 +2,10 @@ import { create } from "zustand";
 import { HistoryService, HistoryTransaction } from "@/services/history.service";
 import {
   formatHistoryAmount,
-  getCounterpartyDisplay,
+  buildTransactionName,
   formatTimestamp,
 } from "@/utils/format";
+import { useAddressBookStore } from "@/stores/useAddressBookStore";
 
 export interface DisplayTransaction {
   id: string;
@@ -105,8 +106,26 @@ const groupTransactionsByContact = (
 };
 
 const transformTransaction = (tx: HistoryTransaction): DisplayTransaction => {
-  const counterpartyDisplay = getCounterpartyDisplay(tx.counterparty);
   const date = new Date(tx.timestamp);
+
+  let handle = tx.counterparty.handle;
+  let displayName = tx.counterparty.displayName;
+  let nickname: string | null = null;
+
+  if (!tx.isInApp && tx.counterparty.address) {
+    const { hasNickname, getDisplayName } = useAddressBookStore.getState();
+    if (hasNickname(tx.counterparty.address)) {
+      nickname = getDisplayName(tx.counterparty.address);
+      handle = nickname;
+      displayName = nickname;
+    }
+  }
+
+  const { name, showAddress } = buildTransactionName(
+    tx.counterparty,
+    tx.isInApp,
+    nickname,
+  );
 
   return {
     id: tx.id,
@@ -119,10 +138,10 @@ const transformTransaction = (tx: HistoryTransaction): DisplayTransaction => {
     type: tx.type,
     counterparty: {
       address: tx.counterparty.address,
-      name: counterpartyDisplay.name,
-      showAddress: counterpartyDisplay.showAddress,
-      handle: tx.counterparty.handle,
-      displayName: tx.counterparty.displayName,
+      name,
+      showAddress,
+      handle,
+      displayName,
       profilePicUrl: tx.counterparty.profilePicUrl,
     },
     displayDate: formatTimestamp(tx.timestamp),
@@ -149,6 +168,7 @@ interface HistoryState {
   error: string | null;
 
   fetchHistory: () => Promise<void>;
+  rebuildDisplayHistory: () => void;
   clearError: () => void;
 }
 
@@ -176,6 +196,14 @@ export const useTransactionHistoryStore = create<HistoryState>((set, get) => ({
     } finally {
       set({ isLoading: false });
     }
+  },
+
+  rebuildDisplayHistory: () => {
+    const { rawHistory } = get();
+    if (!rawHistory.length) return;
+    const displayHistory = rawHistory.map(transformTransaction);
+    const contactThreads = groupTransactionsByContact(displayHistory);
+    set({ displayHistory, contactThreads });
   },
 
   clearError: () => {

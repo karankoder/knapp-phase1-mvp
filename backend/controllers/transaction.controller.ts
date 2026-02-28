@@ -19,7 +19,7 @@ export const transactionController = {
         success: true,
         user,
       });
-    }
+    },
   ),
 
   syncTransaction: catchAsync(
@@ -61,7 +61,7 @@ export const transactionController = {
         message: "Transaction synced successfully",
         transaction,
       });
-    }
+    },
   ),
 
   getHistory: catchAsync(
@@ -69,13 +69,12 @@ export const transactionController = {
       const userId = req.user.id;
 
       const history = await transactionService.getHistory(userId);
-
       res.status(200).json({
         success: true,
         count: history.length,
         history,
       });
-    }
+    },
   ),
 
   getById: catchAsync(
@@ -85,14 +84,14 @@ export const transactionController = {
 
       const transaction = await transactionService.getTransactionById(
         transactionId,
-        userId
+        userId,
       );
 
       res.status(200).json({
         success: true,
         transaction,
       });
-    }
+    },
   ),
 
   updateTransaction: catchAsync(
@@ -103,7 +102,7 @@ export const transactionController = {
       if (!category && !userNote && !status) {
         throw new ErrorHandler(
           "Please provide category, userNote, or status to update",
-          400
+          400,
         );
       }
 
@@ -118,7 +117,7 @@ export const transactionController = {
         transactionId,
         status as TxStatus,
         category,
-        userNote
+        userNote,
       );
 
       res.status(200).json({
@@ -126,6 +125,6 @@ export const transactionController = {
         message: "Transaction updated successfully",
         transaction,
       });
-    }
+    },
   ),
 };

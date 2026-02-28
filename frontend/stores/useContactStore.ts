@@ -7,7 +7,7 @@ export interface Contact {
   name?: string;
   email?: string;
   publicAddress: string;
-  smartAccountAddress?: string;
+  smartAccountAddress: string;
   profilePicUrl?: string;
   lastTransactionAt?: string;
 }

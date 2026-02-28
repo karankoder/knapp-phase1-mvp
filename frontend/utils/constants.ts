@@ -1,9 +1,31 @@
+import {
+  ArrowLeftRight,
+  MoreHorizontal,
+  ShoppingBag,
+  Utensils,
+  Wine,
+} from "lucide-react-native";
+
 export const INFURA_PROJECT_ID = process.env.EXPO_PUBLIC_INFURA_PROJECT_ID;
 export const PROVIDER_URL = `https://base-sepolia.infura.io/v3/${INFURA_PROJECT_ID}`;
 export const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api/v1`;
 export const CHART_DATA = [30, 45, 35, 60, 55, 70, 75];
+export const ACTIVITY_LIMIT = 5;
 
-// Onboarding UI Colors
+interface Category {
+  id: string;
+  label: string;
+  icon: any;
+}
+
+export const CATEGORIES: Category[] = [
+  { id: "drinks", label: "Drinks", icon: Wine },
+  { id: "food", label: "Food", icon: Utensils },
+  { id: "shopping", label: "Shopping", icon: ShoppingBag },
+  { id: "transfer", label: "Transfer", icon: ArrowLeftRight },
+  { id: "other", label: "Other", icon: MoreHorizontal },
+];
+
 export const COLORS = {
   white: "#FFFFFF",
   black: "#000000",
@@ -20,7 +42,6 @@ export const COLORS = {
   emarald: "#10b981",
 };
 
-// Default assets to always show in the app
 export const DEFAULT_ASSETS = [
   {
     symbol: "ETH" as const,

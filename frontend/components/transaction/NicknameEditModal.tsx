@@ -31,7 +31,7 @@ export const NicknameEditModal = ({
   const handleSave = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (nickname.trim()) {
-      onSave(address, nickname.trim());
+      onSave(address, nickname.trim().toLowerCase());
     } else {
       onRemove(address);
     }
@@ -121,10 +121,12 @@ export const NicknameEditModal = ({
                 </Text>
                 <TextInput
                   value={nickname}
-                  onChangeText={setNickname}
-                  placeholder="e.g., Marcus"
+                  onChangeText={(text) => setNickname(text.toLowerCase())}
+                  placeholder="e.g., marcus"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
                   className="px-4 py-4 rounded-xl text-sm text-white"
+                  autoCapitalize="none"
+                  autoCorrect={false}
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.02)",
                     borderWidth: 1,

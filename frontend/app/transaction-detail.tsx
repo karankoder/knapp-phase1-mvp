@@ -21,18 +21,18 @@ import {
   MoreHorizontal,
   Pencil,
   ArrowLeft,
+  Info,
 } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
-import { useAddressNicknames } from "@/hooks/useAddressNicknames";
+import { useAddressBookStore } from "@/stores/useAddressBookStore";
 import { NicknameEditModal } from "@/components/transaction/NicknameEditModal";
 import { HistoryService } from "@/services/history.service";
 import { useTransactionHistoryStore } from "@/stores/useTransactionHistoryStore";
 
-// Helper to truncate wallet addresses
 const truncateAddress = (address: string) => {
   if (!address || address.length < 12) return address;
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+  return `${address.slice(0, 10)}...${address.slice(-8)}`;
 };
 
 interface Category {
@@ -57,9 +57,8 @@ export default function TransactionDetail() {
   const [isSaving, setIsSaving] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const { getDisplayName, hasNickname, setNickname, removeNickname } =
-    useAddressNicknames();
+    useAddressBookStore();
 
-  // Parse transaction data from params
   const transaction = useMemo(
     () =>
       params.id
@@ -81,7 +80,6 @@ export default function TransactionDetail() {
     [params.id],
   );
 
-  // Reset state when transaction ID changes
   useEffect(() => {
     if (transaction) {
       const validCategories = CATEGORIES.map((c) => c.id);
@@ -140,7 +138,6 @@ export default function TransactionDetail() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 32 }}
         >
-          {/* Header */}
           <MotiView
             from={{ opacity: 0, translateY: -20 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -149,7 +146,7 @@ export default function TransactionDetail() {
           >
             <Pressable
               onPress={handleBack}
-              className="w-10 h-10 rounded-2xl items-center justify-center active:opacity-70"
+              className="w-10 h-10 rounded-full items-center justify-center active:opacity-70"
               style={{
                 backgroundColor: "rgba(255, 255, 255, 0.05)",
                 borderWidth: 1,
@@ -167,7 +164,6 @@ export default function TransactionDetail() {
             <View className="w-10" />
           </MotiView>
 
-          {/* Amount & Contact */}
           <MotiView
             from={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -179,7 +175,7 @@ export default function TransactionDetail() {
               style={{
                 color:
                   transaction.type === "receive"
-                    ? COLORS.accent
+                    ? COLORS.emarald
                     : COLORS.platinum,
               }}
             >
@@ -219,7 +215,6 @@ export default function TransactionDetail() {
             )}
           </MotiView>
 
-          {/* Details Section */}
           <MotiView
             from={{ opacity: 0, translateY: 12 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -263,8 +258,8 @@ export default function TransactionDetail() {
                     <View
                       className="w-2 h-2 rounded-full"
                       style={{
-                        backgroundColor: COLORS.accent,
-                        shadowColor: COLORS.accent,
+                        backgroundColor: COLORS.emarald,
+                        shadowColor: COLORS.emarald,
                         shadowOpacity: 0.6,
                         shadowRadius: 10,
                         shadowOffset: { width: 0, height: 0 },
@@ -279,7 +274,6 @@ export default function TransactionDetail() {
             </View>
           </MotiView>
 
-          {/* Category Section */}
           <MotiView
             from={{ opacity: 0, translateY: 12 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -292,7 +286,10 @@ export default function TransactionDetail() {
             >
               Category
             </Text>
-            <View className="flex-row justify-between gap-1.5">
+            <View
+              className="flex-row justify-between gap-1.5"
+              style={{ opacity: 1 }}
+            >
               {CATEGORIES.map((category) => {
                 const Icon = category.icon;
                 const isSelected = selectedCategory === category.id;
@@ -300,6 +297,7 @@ export default function TransactionDetail() {
                   <TouchableOpacity
                     key={category.id}
                     onPress={() => {
+                      if (!transaction.isInApp) return;
                       setSelectedCategory(category.id);
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                     }}
@@ -350,7 +348,6 @@ export default function TransactionDetail() {
             </View>
           </MotiView>
 
-          {/* Note Section */}
           <MotiView
             from={{ opacity: 0, translateY: 12 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -369,6 +366,7 @@ export default function TransactionDetail() {
                 backgroundColor: "rgba(255, 255, 255, 0.02)",
                 borderWidth: 1,
                 borderColor: "rgba(255, 255, 255, 0.1)",
+                opacity: 1,
               }}
             >
               <TextInput
@@ -378,29 +376,43 @@ export default function TransactionDetail() {
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 className="text-lg text-white"
                 multiline
+                editable={transaction.isInApp}
               />
             </View>
           </MotiView>
 
-          {/* Save Button */}
-          <MotiView
-            from={{ opacity: 0, translateY: 15 }}
-            animate={{ opacity: isSaving ? 0.7 : 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 200, delay: 250 }}
-            className="px-6"
-          >
+          <View className="px-6">
+            {!transaction.isInApp && (
+              <View
+                className="flex-row items-start gap-2.5 mb-4 px-4 py-3 rounded-xl"
+                style={{
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  borderWidth: 1,
+                  borderColor: "rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <Info
+                  size={14}
+                  color="rgba(255, 255, 255, 0.35)"
+                  style={{ marginTop: 1 }}
+                />
+                <Text
+                  className="flex-1 text-xs text-white/40 leading-5"
+                  style={{ letterSpacing: 0.3 }}
+                >
+                  On-chain transactions are immutable. Category and notes cannot
+                  be saved for external transfers.
+                </Text>
+              </View>
+            )}
             <TouchableOpacity
               onPress={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || !transaction.isInApp}
               activeOpacity={0.8}
-              className="w-full py-5 rounded-2xl items-center relative overflow-hidden"
+              className="w-full py-5 rounded-2xl items-center"
               style={{
                 backgroundColor: COLORS.accent,
-                shadowColor: COLORS.platinum,
-                shadowOpacity: 0.2,
-                shadowRadius: 20,
-                shadowOffset: { width: 0, height: 0 },
-                elevation: 10,
+                opacity: isSaving || !transaction.isInApp ? 0.7 : 1,
               }}
             >
               <Text
@@ -410,11 +422,10 @@ export default function TransactionDetail() {
                 {isSaving ? "Updating..." : "Update Transaction"}
               </Text>
             </TouchableOpacity>
-          </MotiView>
+          </View>
         </ScrollView>
       </SafeAreaView>
 
-      {/* Nickname Edit Modal */}
       {transaction?.address && (
         <NicknameEditModal
           isOpen={isNicknameModalOpen}

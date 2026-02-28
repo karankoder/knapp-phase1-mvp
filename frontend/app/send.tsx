@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -12,9 +12,24 @@ type Step = "recipient" | "amount";
 
 export default function Send() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("recipient");
+  const params = useLocalSearchParams();
+
+  const prefilledContact: Contact | null = params.contactId
+    ? {
+        id: params.contactId as string,
+        handle: params.contactHandle as string,
+        name: params.contactName as string | undefined,
+        publicAddress: params.contactAddress as string,
+        smartAccountAddress: params.contactSmartAddress as string,
+        profilePicUrl: params.contactProfilePic as string | undefined,
+      }
+    : null;
+
+  const [step, setStep] = useState<Step>(
+    prefilledContact ? "amount" : "recipient",
+  );
   const [selectedRecipient, setSelectedRecipient] = useState<Contact | null>(
-    null,
+    prefilledContact,
   );
 
   const handleBack = () => {

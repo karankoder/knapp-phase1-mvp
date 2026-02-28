@@ -28,12 +28,12 @@ export const authentication = async (
   }
 
   if (!token) {
+    console.log("No token found in request headers");
     return next(new ErrorHandler("Not authorized to access this route", 401));
   }
 
   try {
     const decoded: any = jwt.verify(token, JWT_SECRET);
-
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
       select: {

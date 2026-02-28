@@ -23,7 +23,7 @@ import {
 import { COLORS } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAddressNicknames } from "@/hooks/useAddressNicknames";
+import { useAddressBookStore } from "@/stores/useAddressBookStore";
 import { NicknameEditModal } from "./NicknameEditModal";
 
 // Helper to truncate wallet addresses
@@ -78,7 +78,7 @@ export const TransactionDetailModal = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isNicknameModalOpen, setIsNicknameModalOpen] = useState(false);
   const { getDisplayName, hasNickname, setNickname, removeNickname } =
-    useAddressNicknames();
+    useAddressBookStore();
 
   // Reset state when transaction changes
   useEffect(() => {

@@ -81,14 +81,12 @@ export const useWalletStore = create<WalletState>((set, get) => ({
     try {
       const portfolio = await WalletService.getPortfolio();
 
-      // Update portfolio totals
       set({
         totalUSDValue: portfolio.totalUSD,
         change24h: portfolio.change24h,
         percentChange24h: portfolio.percentChange24h,
       });
 
-      // Update individual token balances
       const updatedAssets = get().assets.map((asset) => {
         const portfolioToken = portfolio.tokens.find(
           (t: any) => t.symbol === asset.symbol,
