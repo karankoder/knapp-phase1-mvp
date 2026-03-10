@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ArrowLeft } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
 import { GroupMember } from "@/stores/useGroupStore";
@@ -23,7 +24,10 @@ export const GroupDetailsHeader = ({
   return (
     <View className="flex-row items-center gap-3 px-6 pt-4 pb-6">
       <Pressable
-        onPress={onBack}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onBack();
+        }}
         className="w-12 h-12 rounded-full items-center justify-center"
         style={{
           backgroundColor: `${COLORS.white}08`,

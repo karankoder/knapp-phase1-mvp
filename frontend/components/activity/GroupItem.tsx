@@ -1,5 +1,6 @@
 import { ChevronRight, Scale, Users } from "lucide-react-native";
 import { Pressable, View, Text } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { COLORS } from "@/utils/constants";
 import { Group } from "@/stores/useGroupStore";
@@ -30,7 +31,10 @@ export const GroupItem = ({ group, index, onPress }: GroupItemProps) => {
       transition={{ type: "timing", duration: 150, delay: index * 50 }}
     >
       <Pressable
-        onPress={() => onPress(group)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress(group);
+        }}
         className="p-4 rounded-2xl mb-2 active:opacity-70 border bg-white/5 border-white/15"
       >
         <View className="flex-row items-center gap-4">

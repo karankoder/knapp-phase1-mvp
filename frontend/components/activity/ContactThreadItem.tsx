@@ -1,5 +1,6 @@
 import { ChevronRight, Scale } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { COLORS } from "@/utils/constants";
 import { ContactThread } from "@/stores/useTransactionHistoryStore";
@@ -22,7 +23,10 @@ export const ContactThreadItem = ({
       transition={{ type: "timing", duration: 150, delay: index * 50 }}
     >
       <Pressable
-        onPress={() => onPress(thread)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress(thread);
+        }}
         className="p-4 rounded-2xl mb-2 active:opacity-70 border bg-white/5 border-white/15"
       >
         <View className="flex-row items-center gap-4">

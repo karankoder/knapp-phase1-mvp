@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { Check } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
@@ -26,7 +27,10 @@ export const GroupContactRow = ({
       style={{ marginBottom: 8 }}
     >
       <Pressable
-        onPress={() => onToggle(contact)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onToggle(contact);
+        }}
         className="flex-row items-center gap-4 p-4 rounded-2xl active:opacity-70"
         style={{
           backgroundColor: isSelected

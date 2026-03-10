@@ -1,6 +1,6 @@
 import { View, Text } from "react-native";
 import { TransactionItem } from "./TransactionItem";
-import { ActivitySkeleton } from "../homeScreen/ActivitySkeleton";
+import { TransactionsSkeleton } from "../homeScreen/ActivitySkeleton";
 import { COLORS } from "@/utils/constants";
 import { DisplayTransaction } from "@/stores/useTransactionHistoryStore";
 import { useRouter } from "expo-router";
@@ -35,7 +35,7 @@ export function TransactionsTab({
   };
 
   if (isLoading) {
-    return <ActivitySkeleton />;
+    return <TransactionsSkeleton />;
   }
 
   if (transactions.length === 0) {

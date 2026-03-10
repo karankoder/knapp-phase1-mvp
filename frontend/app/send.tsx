@@ -1,5 +1,6 @@
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, X } from "lucide-react-native";
+import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -32,6 +33,7 @@ export default function Send() {
   );
 
   const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (step === "recipient") {
       router.back();
     } else if (step === "amount") {
@@ -41,6 +43,7 @@ export default function Send() {
   };
 
   const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.back();
   };
 

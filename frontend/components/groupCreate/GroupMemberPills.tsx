@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { X } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
@@ -49,7 +50,10 @@ export const GroupMemberPills = ({
             transition={{ type: "timing", duration: 150 }}
           >
             <Pressable
-              onPress={() => onRemove(member)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onRemove(member);
+              }}
               className="flex-row items-center gap-2 px-3 py-2 rounded-full"
               style={{
                 backgroundColor: `${COLORS.white}0a`,

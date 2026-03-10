@@ -1,5 +1,6 @@
 import { View, Text, ScrollView, Pressable, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 import { Plus } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { COLORS } from "@/utils/constants";
@@ -103,7 +104,7 @@ export default function GroupDetailsScreen() {
       />
 
       <Pressable
-        onPress={() => setShowAddExpense(true)}
+        onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); setShowAddExpense(true); }}
         className="absolute bottom-6 right-6 w-14 h-14 rounded-full items-center justify-center active:opacity-80"
         style={[
           { backgroundColor: COLORS.accent },

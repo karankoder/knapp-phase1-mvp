@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { AlertCircle } from "lucide-react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -112,6 +113,7 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
   const balanceValidation = validateBalance(amountValue, currentBalance);
 
   const handleQuickAmount = (percentage: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const calculatedAmount = calculatePercentageAmount(
       percentage,
       currentBalance,
@@ -121,6 +123,7 @@ export const AmountStep = ({ recipient }: AmountStepProps) => {
 
   /** When user manually switches token in a settlement flow, convert to new token units */
   const handleTokenSelect = (token: Token) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const asset = getAssetBySymbol(token.symbol);
     if (!asset) return;
     setSelectedToken(asset);

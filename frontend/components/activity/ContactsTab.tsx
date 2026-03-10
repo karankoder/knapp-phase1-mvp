@@ -4,7 +4,7 @@ import {
   DisplayTransaction,
   ContactThread,
 } from "@/stores/useTransactionHistoryStore";
-import { ActivitySkeleton } from "../homeScreen/ActivitySkeleton";
+import { ContactsSkeleton } from "../homeScreen/ActivitySkeleton";
 import { useRouter } from "expo-router";
 
 export type { ContactThread };
@@ -31,7 +31,7 @@ export function ContactsTab({
   };
 
   if (isLoading) {
-    return <ActivitySkeleton />;
+    return <ContactsSkeleton />;
   }
 
   if (contactThreads.length === 0) {

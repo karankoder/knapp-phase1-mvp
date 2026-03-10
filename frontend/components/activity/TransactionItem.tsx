@@ -1,5 +1,6 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { COLORS } from "@/utils/constants";
 import { DisplayTransaction } from "@/stores/useTransactionHistoryStore";
@@ -25,7 +26,10 @@ export const TransactionItem = ({
       transition={{ type: "timing", duration: 150, delay: index * 30 }}
     >
       <Pressable
-        onPress={() => onPress(transaction)}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onPress(transaction);
+        }}
         className="px-4 py-4 rounded-3xl mb-2 active:opacity-70 bg-white/5 border border-white/15"
       >
         <View className="flex-row items-center gap-4">

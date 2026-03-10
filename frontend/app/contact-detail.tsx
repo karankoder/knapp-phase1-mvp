@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { View, Text, Pressable, ScrollView, Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
   ArrowLeft,
@@ -63,11 +64,13 @@ export default function ContactDetail() {
     : null;
 
   const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.back();
   };
 
   const handleSendToContact = () => {
     if (!contact) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     const handle = contact.displayName.startsWith("@")
       ? contact.displayName.slice(1)
       : contact.displayName;
@@ -83,6 +86,7 @@ export default function ContactDetail() {
   };
 
   const handleTransactionClick = (tx: DisplayTransaction) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: "/transaction-detail",
       params: {

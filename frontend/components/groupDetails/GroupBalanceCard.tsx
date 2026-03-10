@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { Scale, Check } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
@@ -98,7 +99,10 @@ export const GroupBalanceCard = ({
 
         {net < 0 && (
           <Pressable
-            onPress={onSettleUp}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              onSettleUp();
+            }}
             className="px-5 py-3 rounded-2xl ml-4 active:opacity-80"
             style={{ backgroundColor: COLORS.accent }}
           >

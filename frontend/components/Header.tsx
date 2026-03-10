@@ -1,4 +1,5 @@
 import { usePathname, useRouter } from "expo-router";
+import * as Haptics from "expo-haptics";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import { Pressable, Text, View, TouchableOpacity } from "react-native";
 import { CrownIcon } from "./onboarding/CrownIcon";
@@ -18,18 +19,22 @@ export const Header = ({ onReceive }: HeaderProps) => {
   const initials = getInitials(user?.displayName ?? null, user?.handle ?? "");
 
   const handleReceive = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onReceive?.();
   };
 
   const handleSend = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     router.push("/send");
   };
 
   const handleLogoPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/(tabs)");
   };
 
   const handleAvatarPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push("/(tabs)/profile");
   };
 

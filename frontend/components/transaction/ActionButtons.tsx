@@ -1,5 +1,6 @@
 import { ArrowLeft, Share2 } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { COLORS } from "@/utils/constants";
 
@@ -20,7 +21,10 @@ export const ActionButtons = ({
       className="mt-8 gap-4"
     >
       <Pressable
-        onPress={onShareProof}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onShareProof();
+        }}
         className="w-full py-4 rounded-xl items-center justify-center active:opacity-80 border border-muted/35"
       >
         <View className="flex-row items-center gap-2">
@@ -30,7 +34,10 @@ export const ActionButtons = ({
       </Pressable>
 
       <Pressable
-        onPress={onBackToDashboard}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onBackToDashboard();
+        }}
         className="w-full py-3 items-center justify-center"
       >
         <View className="flex-row items-center gap-2">

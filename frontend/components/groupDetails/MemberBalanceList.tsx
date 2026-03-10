@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { Check, Scale } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
@@ -127,7 +128,10 @@ export const MemberBalanceList = ({
                 {/* Settle button — only when you owe them */}
                 {owesThem && (
                   <Pressable
-                    onPress={() => onSettle(b)}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      onSettle(b);
+                    }}
                     className="px-3 py-1.5 rounded-xl ml-2 active:opacity-70"
                     style={{
                       backgroundColor: `${COLORS.white}10`,

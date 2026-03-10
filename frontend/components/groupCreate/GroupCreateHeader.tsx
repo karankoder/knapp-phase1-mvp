@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ArrowLeft } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
 
@@ -13,7 +14,10 @@ export const GroupCreateHeader = ({ onBack }: GroupCreateHeaderProps) => {
       style={{ borderColor: `${COLORS.white}10` }}
     >
       <Pressable
-        onPress={onBack}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onBack();
+        }}
         className="w-12 h-12 rounded-full items-center justify-center"
         style={{
           backgroundColor: `${COLORS.white}08`,

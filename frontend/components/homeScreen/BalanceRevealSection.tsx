@@ -1,5 +1,6 @@
 import { useState, ReactNode, useEffect } from "react";
 import { View, Text, TouchableOpacity } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ChevronDown, EyeOff } from "lucide-react-native";
 import { MotiView } from "moti";
 import Animated, {
@@ -76,6 +77,7 @@ export const BalanceRevealSection = ({
     });
 
   const toggleReveal = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const newState = !isBalanceRevealed;
     translateY.value = withTiming(newState ? 80 : 0, { duration: 300 });
     setIsBalanceRevealed(newState);

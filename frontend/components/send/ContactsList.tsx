@@ -7,6 +7,7 @@ import {
   BookUser,
 } from "lucide-react-native";
 import { Pressable, Text, TextInput, View, ScrollView } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { useEffect, useCallback, useState } from "react";
 import { Contact, useContactStore } from "@/stores/useContactStore";
@@ -134,6 +135,7 @@ export const ContactsList = ({
   };
 
   const handlePasteAddress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await refreshClipboard();
     const text = await Clipboard.getStringAsync();
     if (text && isEthAddress(text.trim())) {
@@ -214,7 +216,10 @@ export const ContactsList = ({
 
       {queryAddressContact && (
         <Pressable
-          onPress={() => onSelectContact(queryAddressContact)}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onSelectContact(queryAddressContact);
+          }}
           className="w-full flex-row items-center gap-3 p-4 rounded-2xl border border-primary/40 mb-4 active:opacity-70 bg-primary/10"
         >
           <View className="w-10 h-10 rounded-full items-center justify-center bg-primary/20">
@@ -259,7 +264,10 @@ export const ContactsList = ({
               {displayContacts.map((contact) => (
                 <Pressable
                   key={contact.id}
-                  onPress={() => onSelectContact(contact)}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onSelectContact(contact);
+                  }}
                   className="flex-row items-center gap-3 p-4 rounded-2xl border border-white/15 bg-white/5 active:opacity-70"
                 >
                   <View className="w-10 h-10 rounded-full items-center justify-center bg-white/10">

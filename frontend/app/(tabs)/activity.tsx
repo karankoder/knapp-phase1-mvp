@@ -1,5 +1,12 @@
-import { useState, useMemo } from "react";
-import { ScrollView, View, Text, Pressable, Platform } from "react-native";
+import { useState, useMemo, useCallback } from "react";
+import {
+  ScrollView,
+  View,
+  Text,
+  Pressable,
+  Platform,
+  RefreshControl,
+} from "react-native";
 import { MotiView } from "moti";
 import { Plus } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -17,7 +24,7 @@ export default function Activity() {
   const [activityTab, setActivityTab] = useState<ActivityTab>("transactions");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { displayHistory, contactThreads, isLoading } =
+  const { displayHistory, contactThreads, isLoading, fetchHistory } =
     useTransactionHistoryStore();
   const {
     groups,
@@ -60,6 +67,14 @@ export default function Activity() {
     router.push("/group-create");
   };
 
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await Promise.all([fetchHistory(), fetchGroups()]);
+    setIsRefreshing(false);
+  }, [fetchHistory, fetchGroups]);
+
   const handleTabChange = (tab: ActivityTab) => {
     setActivityTab(tab);
     setSearchQuery("");
@@ -71,6 +86,15 @@ export default function Activity() {
         className="flex-1"
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={COLORS.platinum}
+            colors={[COLORS.platinum]}
+            progressBackgroundColor="#111111"
+          />
+        }
       >
         <View className="flex-row items-center justify-between mt-5 mb-4">
           <Text className="text-2xl font-semibold text-primary">Activity</Text>

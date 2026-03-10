@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, Pressable, Modal, ActivityIndicator } from "react-native";
+import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
 import { X, ArrowRight, CheckCircle, AlertCircle } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -36,6 +37,7 @@ export const SettleBottomSheet = ({
   const memberDisplayName = member.displayName || `@${member.handle}`;
 
   const handleClose = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setConfirmManual(false);
     setError(null);
     onClose();
@@ -43,6 +45,7 @@ export const SettleBottomSheet = ({
 
   const handleSendAndSettle = () => {
     if (!member.smartAccountAddress) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     handleClose();
     router.push({
       pathname: "/send",
@@ -60,6 +63,7 @@ export const SettleBottomSheet = ({
   };
 
   const handleManualSettle = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsMarkingSettled(true);
     setError(null);
     try {
@@ -175,7 +179,7 @@ export const SettleBottomSheet = ({
               {/* Option 2 — Mark as Settled */}
               {!confirmManual ? (
                 <Pressable
-                  onPress={() => setConfirmManual(true)}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); setConfirmManual(true); }}
                   className="flex-row items-center gap-4 p-4 rounded-2xl active:opacity-80"
                   style={{
                     backgroundColor: "rgba(255,255,255,0.05)",
@@ -241,6 +245,7 @@ export const SettleBottomSheet = ({
                   <View className="flex-row gap-3">
                     <Pressable
                       onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setConfirmManual(false);
                         setError(null);
                       }}

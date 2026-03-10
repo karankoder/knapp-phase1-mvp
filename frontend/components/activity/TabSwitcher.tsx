@@ -1,4 +1,5 @@
 import { View, Text, Pressable } from "react-native";
+import * as Haptics from "expo-haptics";
 import { COLORS } from "@/utils/constants";
 
 export type ActivityTab = "transactions" | "contacts" | "groups";
@@ -12,7 +13,10 @@ export function TabSwitcher({ activeTab, onTabChange }: TabSwitcherProps) {
   return (
     <View className="flex-row gap-2 mb-5">
       <Pressable
-        onPress={() => onTabChange("transactions")}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onTabChange("transactions");
+        }}
         className="flex-1 py-3 rounded-2xl active:opacity-80"
         style={{
           backgroundColor:
@@ -36,7 +40,10 @@ export function TabSwitcher({ activeTab, onTabChange }: TabSwitcherProps) {
         </Text>
       </Pressable>
       <Pressable
-        onPress={() => onTabChange("contacts")}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onTabChange("contacts");
+        }}
         className="flex-1 py-3 rounded-2xl active:opacity-80"
         style={{
           backgroundColor:
@@ -60,7 +67,10 @@ export function TabSwitcher({ activeTab, onTabChange }: TabSwitcherProps) {
         </Text>
       </Pressable>
       <Pressable
-        onPress={() => onTabChange("groups")}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onTabChange("groups");
+        }}
         className="flex-1 py-3 rounded-2xl active:opacity-80"
         style={{
           backgroundColor:

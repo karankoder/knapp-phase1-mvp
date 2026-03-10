@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
 
@@ -11,7 +12,10 @@ export const ActionButtons = ({ onReceive, onSend }: ActionButtonsProps) => {
   return (
     <View className="flex-row gap-3 mb-6">
       <TouchableOpacity
-        onPress={onReceive}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onReceive();
+        }}
         activeOpacity={0.7}
         className="flex-1 py-4 flex-row items-center justify-center gap-2 rounded-2xl border border-white/20"
         style={{ backgroundColor: "transparent" }}
@@ -20,7 +24,10 @@ export const ActionButtons = ({ onReceive, onSend }: ActionButtonsProps) => {
         <Text className="text-base font-medium text-white">Receive</Text>
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={onSend}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          onSend();
+        }}
         activeOpacity={0.7}
         className="flex-1 py-4 flex-row items-center justify-center gap-2 rounded-2xl"
         style={{ backgroundColor: COLORS.white }}
