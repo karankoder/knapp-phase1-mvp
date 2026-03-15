@@ -16,6 +16,7 @@ import { useAuthStore } from "@/stores/useAuthStore";
 import { useAlertStore } from "@/stores/useAlertStore";
 import { AppAlert } from "@/components/alert/AppAlert";
 import { analyticsScreen } from "@/services/analytics.service";
+import { registerUnauthorizedHandler } from "@/services/api";
 
 import "./global.css";
 
@@ -64,6 +65,7 @@ function RootLayoutInner() {
   const [navigationReady, setNavigationReady] = useState(false);
 
   useEffect(() => {
+    registerUnauthorizedHandler(() => useAuthStore.getState().logout());
     loadSession();
   }, []);
 

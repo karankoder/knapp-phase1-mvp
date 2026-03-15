@@ -2,6 +2,13 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import { API_URL } from "../utils/constants";
 
+type LogoutFn = () => Promise<void>;
+let _unauthorizedHandler: LogoutFn | null = null;
+
+export const registerUnauthorizedHandler = (fn: LogoutFn) => {
+  _unauthorizedHandler = fn;
+};
+
 export const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -20,16 +27,9 @@ api.interceptors.request.use(async (config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response) {
-      console.error(
-        "API Error:",
-        error.response.data.message || error.response.status,
-      );
-    } else if (error.request) {
-      console.error("Network Error: No response received");
-    } else {
-      console.error("Request Error:", error.message);
+  async (error) => {
+    if (error.response?.status === 401 && _unauthorizedHandler) {
+      await _unauthorizedHandler();
     }
     return Promise.reject(error);
   },

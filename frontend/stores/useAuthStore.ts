@@ -7,6 +7,15 @@ import {
   analyticsReset,
 } from "@/services/analytics.service";
 
+const isJwtExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+};
+
 interface UserProfile {
   id: string;
   handle: string;
@@ -68,13 +77,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const token = await SecureStore.getItemAsync("auth_token");
       const userStr = await SecureStore.getItemAsync("user_profile");
 
-      if (token && userStr) {
+      if (token && userStr && !isJwtExpired(token)) {
         const user = JSON.parse(userStr);
-        set({
-          token,
-          user,
-          isAuthenticated: true,
-        });
+        set({ token, user, isAuthenticated: true });
 
         analyticsIdentify(user.id, {
           handle: user.handle,
@@ -83,10 +88,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           displayName: user.displayName,
         });
 
-        // Initialize wallet address on session restore
         if (user.smartAccountAddress) {
           useWalletStore.getState().setWalletAddress(user.smartAccountAddress);
         }
+      } else if (token) {
+        // Token exists but is expired — clear stale credentials
+        await SecureStore.deleteItemAsync("auth_token");
+        await SecureStore.deleteItemAsync("user_profile");
       }
     } catch (e) {
       console.error("Failed to load session", e);

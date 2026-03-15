@@ -26,26 +26,34 @@ export const GateScreen = ({ isCheckingBackend = false }: GateScreenProps) => {
     setIsLoading(true);
     setError(null);
 
+    const authParams =
+      provider === "apple"
+        ? {
+            type: "oauth" as const,
+            authProviderId: "auth0" as const,
+            auth0Connection: "apple",
+            mode: "redirect" as const,
+            redirectUrl: "astra://oauth-callback",
+          }
+        : {
+            type: "oauth" as const,
+            authProviderId: "google" as const,
+            mode: "redirect" as const,
+            redirectUrl: "astra://oauth-callback",
+          };
+
     try {
-      authenticate(
-        {
-          type: "oauth",
-          authProviderId: provider,
-          mode: "redirect",
-          redirectUrl: "astra://oauth-callback",
+      authenticate(authParams, {
+        onSuccess: () => {
+          setIsLoading(false);
+          handleAuthSuccess();
         },
-        {
-          onSuccess: () => {
-            setIsLoading(false);
-            handleAuthSuccess();
-          },
-          onError: (err) => {
-            setIsLoading(false);
-            const msg = err instanceof Error ? err.message : String(err);
-            setError(msg);
-          },
+        onError: (err) => {
+          setIsLoading(false);
+          const msg = err instanceof Error ? err.message : String(err);
+          setError(msg);
         },
-      );
+      });
     } catch (err) {
       setIsLoading(false);
       const msg = err instanceof Error ? err.message : String(err);

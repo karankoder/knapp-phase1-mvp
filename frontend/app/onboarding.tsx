@@ -4,76 +4,74 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { GateScreen } from "../components/onboarding/GateScreen";
 import { IdentityScreen } from "../components/onboarding/IdentityScreen";
-import { WelcomeBackScreen } from "../components/onboarding/WelcomeBackScreen";
 import { VaultOpeningAnimation } from "../components/onboarding/VaultOpeningAnimation";
 import { useSignerStatus, useUser } from "@account-kit/react-native";
 import { AlchemySignerStatus } from "@account-kit/signer";
 import { useAuthStore } from "@/stores/useAuthStore";
+import { useAlertStore } from "@/stores/useAlertStore";
 import { AuthService } from "@/services/auth.service";
 
-type OnboardingStep = "gate" | "identity" | "welcome-back";
+type OnboardingStep = "gate" | "identity";
 
 export default function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState<OnboardingStep>("gate");
   const [handle, setHandle] = useState("");
   const [isVaultOpening, setIsVaultOpening] = useState(false);
+  const [isCheckingBackend, setIsCheckingBackend] = useState(false);
 
   const { status: signerStatus, isAuthenticating } = useSignerStatus();
   const signerConnected = signerStatus === AlchemySignerStatus.CONNECTED;
   const user = useUser();
   const { isAuthenticated } = useAuthStore();
-  const [isCheckingBackend, setIsCheckingBackend] = useState(false);
+
+  const goToTabs = () => {
+    setIsVaultOpening(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    setTimeout(() => router.replace("/(tabs)"), 600);
+  };
 
   useEffect(() => {
     if (!signerConnected || !user) return;
 
+    // Already have a valid session (e.g. re-auth after JWT expiry)
     if (isAuthenticated) {
-      setIsVaultOpening(true);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      setTimeout(() => {
-        router.replace("/(tabs)");
-      }, 600);
+      goToTabs();
       return;
     }
 
+    if (step !== "gate") return;
+
     const checkExistingUser = async () => {
       setIsCheckingBackend(true);
-
       try {
         await AuthService.loginWithSigner(user.address);
-        setIsVaultOpening(true);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        setTimeout(() => {
-          router.replace("/(tabs)");
-        }, 600);
-      } catch {
-        // Todo: We can add one more API  to check the user
-        setStep("identity");
+        goToTabs();
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          // New user — let them pick a handle
+          setStep("identity");
+        } else {
+          // Network or server error — stay on gate, show alert
+          useAlertStore
+            .getState()
+            .error(
+              "Sign in failed",
+              "Please check your connection and try again.",
+            );
+        }
       } finally {
         setIsCheckingBackend(false);
       }
     };
 
-    if (step === "gate") {
-      checkExistingUser();
-    }
+    checkExistingUser();
   }, [signerConnected, user]);
 
   const handleFinish = () => {
     setIsVaultOpening(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setTimeout(() => {
-      router.replace("/(tabs)");
-    }, 600);
-  };
-
-  const handleBioUnlock = () => {
-    setIsVaultOpening(true);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    setTimeout(() => {
-      router.replace("/(tabs)");
-    }, 500);
+    setTimeout(() => router.replace("/(tabs)"), 600);
   };
 
   return (
@@ -89,14 +87,6 @@ export default function Onboarding() {
           handle={handle}
           setHandle={setHandle}
           onFinish={handleFinish}
-        />
-      )}
-
-      {step === "welcome-back" && !isVaultOpening && user && (
-        <WelcomeBackScreen
-          handle={user.email || "User"}
-          onUnlock={handleBioUnlock}
-          onNewAccount={() => setStep("gate")}
         />
       )}
     </View>
