@@ -1,17 +1,17 @@
 # ATARA
 
-**ATARA** is a mobile-first crypto payment application built for everyday peer-to-peer transfers and group expense splitting. It runs on Base Sepolia (ERC-4337), uses Alchemy Smart Wallets so users never manage private keys, and authenticates with Google and Apple — no seed phrases, no friction.
+**ATARA** is a mobile-first crypto payment application built for everyday peer-to-peer transfers and group expense splitting. It runs on Base Sepolia (ERC-4337), uses Alchemy Smart Wallets so users never manage private keys, and authenticates with Google and Apple - no seed phrases, no friction.
 
 ---
 
 ## What It Does
 
-- **Send crypto** to any ATARA user by handle (e.g. `@karan`) — no wallet addresses needed
-- **Group expense splitting** — create groups, log shared expenses, settle directly on-chain with automatic USD value verification
-- **Contact book** — search and save friends by handle, view threaded conversation history
-- **Transaction history** — full activity feed with categories (drinks, food, shopping, transfer, other), notes, and receipt detail views
-- **Wallet management** — ETH + USDC/USDT balances on Base Sepolia
-- **Feedback** — in-app feedback submissions delivered via email
+- **Send crypto** to any ATARA user by handle (e.g. `@karan`) - no wallet addresses needed
+- **Group expense splitting** - create groups, log shared expenses, settle directly on-chain with automatic USD value verification
+- **Contact book** - search and save friends by handle, view threaded conversation history
+- **Transaction history** - full activity feed with categories (drinks, food, shopping, transfer, other), notes, and receipt detail views
+- **Wallet management** - ETH + USDC/USDT balances on Base Sepolia
+- **Feedback** - in-app feedback submissions delivered via email
 
 ---
 
@@ -45,7 +45,7 @@
 2. Alchemy SDK handles OAuth → creates / restores an embedded signer (EOA)
 3. Alchemy deploys a ModularAccountV2 smart account (ERC-4337) for the user
 4. Frontend calls `/api/v1/auth/login` (or `/register` for new users) with the signer address
-5. Backend issues a **7-day JWT** — all subsequent API calls use this token
+5. Backend issues a **7-day JWT** - all subsequent API calls use this token
 6. On app restart, `loadSession` checks JWT expiry before trusting the stored token; expired tokens trigger a silent logout
 
 ---
@@ -117,7 +117,7 @@ knapp-phase1-mvp/
 
 Base URL: `http://localhost:4000/api/v1`
 
-### Auth — `/auth`
+### Auth - `/auth`
 
 | Method | Path                    | Description                                                      |
 | ------ | ----------------------- | ---------------------------------------------------------------- |
@@ -125,7 +125,7 @@ Base URL: `http://localhost:4000/api/v1`
 | `POST` | `/login`                | Authenticate by signer address, returns JWT                      |
 | `GET`  | `/check-handle/:handle` | Check handle availability                                        |
 
-### Transactions — `/transaction`
+### Transactions - `/transaction`
 
 | Method | Path               | Description                                              |
 | ------ | ------------------ | -------------------------------------------------------- |
@@ -133,13 +133,13 @@ Base URL: `http://localhost:4000/api/v1`
 | `GET`  | `/history`         | Paginated transaction history for the authenticated user |
 | `GET`  | `/resolve/:handle` | Resolve a handle to a user + wallet address              |
 
-### Wallet — `/wallet`
+### Wallet - `/wallet`
 
 | Method | Path        | Description                          |
 | ------ | ----------- | ------------------------------------ |
 | `GET`  | `/balances` | ETH + ERC-20 balances for an address |
 
-### Users — `/user`
+### Users - `/user`
 
 | Method  | Path      | Description                                                |
 | ------- | --------- | ---------------------------------------------------------- |
@@ -147,7 +147,7 @@ Base URL: `http://localhost:4000/api/v1`
 | `PATCH` | `/me`     | Update profile (handle, email, displayName, profilePicUrl) |
 | `GET`   | `/search` | Search users by handle                                     |
 
-### Groups — `/groups`
+### Groups - `/groups`
 
 | Method   | Path            | Description                                               |
 | -------- | --------------- | --------------------------------------------------------- |
@@ -158,13 +158,13 @@ Base URL: `http://localhost:4000/api/v1`
 | `POST`   | `/:id/settle`   | Settle debt via on-chain transaction (USD value verified) |
 | `DELETE` | `/:id`          | Delete a group (creator only)                             |
 
-### Feedback — `/feedback`
+### Feedback - `/feedback`
 
 | Method | Path | Description                                              |
 | ------ | ---- | -------------------------------------------------------- |
 | `POST` | `/`  | Submit feedback (delivered via SMTP to configured inbox) |
 
-### Health — `/health`
+### Health - `/health`
 
 | Method | Path | Description    |
 | ------ | ---- | -------------- |
@@ -179,21 +179,21 @@ User
 ├── id (uuid)
 ├── handle (unique)
 ├── email (unique, optional)
-├── publicAddress          — EOA / signer address
-├── smartAccountAddress    — ERC-4337 smart account (unique, optional)
-├── authProvider           — "google" | "apple"
+├── publicAddress          - EOA / signer address
+├── smartAccountAddress    - ERC-4337 smart account (unique, optional)
+├── authProvider           - "google" | "apple"
 ├── profilePicUrl
 └── displayName
 
 Transaction
 ├── id, txHash (unique)
 ├── senderId → User
-├── receiverId → User (nullable — external wallet)
-├── receiverAddress        — on-chain destination
+├── receiverId → User (nullable - external wallet)
+├── receiverAddress        - on-chain destination
 ├── assetSymbol, amount, rawAmountWei
-├── category               — drinks | food | shopping | transfer | other
+├── category               - drinks | food | shopping | transfer | other
 ├── userNote
-└── status                 — PENDING | COMPLETED | FAILED
+└── status                 - PENDING | COMPLETED | FAILED
 
 Group
 ├── id, name, description
@@ -307,7 +307,7 @@ npm run android        # Build and run on Android device/emulator
 npm run ios            # Build and run on iOS simulator (macOS only)
 ```
 
-> **Note:** This app uses `expo-dev-client` (not Expo Go) because of native modules — `@account-kit/react-native`, `react-native-mmkv`, etc. Run `expo run:android` or `expo run:ios` to generate the native shell on first use.
+> **Note:** This app uses `expo-dev-client` (not Expo Go) because of native modules - `@account-kit/react-native`, `react-native-mmkv`, etc. Run `expo run:android` or `expo run:ios` to generate the native shell on first use.
 
 ---
 
