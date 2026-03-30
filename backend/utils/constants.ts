@@ -1,6 +1,12 @@
 // Server Configuration
 export const PORT = Number(process.env.PORT || 4000);
+export const NODE_ENV = process.env.NODE_ENV || "development";
 export const DB_CONNECTION_STRING = process.env.DATABASE_URL || "";
+
+export const CORS_ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // 0x API Constants
 export const ZEROX_API_KEY = process.env.ZEROX_API_KEY || "";

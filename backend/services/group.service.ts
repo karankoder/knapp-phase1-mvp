@@ -14,7 +14,7 @@ async function verifySettlementTx(data: {
   requiredUsd: number;
 }) {
   const normalizedHash = data.txHash.toLowerCase();
-  const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL);
+  const alchemyProvider = new ethers.providers.JsonRpcProvider(ALCHEMY_URL);
   const receipt = await alchemyProvider.getTransactionReceipt(normalizedHash);
 
   if (!receipt) {
@@ -29,7 +29,7 @@ async function verifySettlementTx(data: {
   }
 
   if (data.assetSymbol === "ETH") {
-    const calculatedDecimal = ethers.formatEther(data.rawAmountWei);
+    const calculatedDecimal = ethers.utils.formatEther(data.rawAmountWei);
     if (Math.abs(parseFloat(calculatedDecimal) - data.amount) > 0.0001) {
       throw new ErrorHandler(
         `Decimal amount mismatch. Wei: ${data.rawAmountWei} equals ${calculatedDecimal} ETH, but received ${data.amount}`,

@@ -73,7 +73,7 @@ class TransactionService {
       throw new ErrorHandler("Transaction already synced", 409);
     }
 
-    const alchemyProvider = new ethers.JsonRpcProvider(ALCHEMY_URL);
+    const alchemyProvider = new ethers.providers.JsonRpcProvider(ALCHEMY_URL);
     const receipt =
       await alchemyProvider.getTransactionReceipt(normalizedTxHash);
 
@@ -93,7 +93,7 @@ class TransactionService {
     // is sufficient to confirm the UserOperation executed successfully.
 
     // Validate that rawAmountWei and amount are consistent
-    const calculatedDecimal = ethers.formatEther(data.rawAmountWei);
+    const calculatedDecimal = ethers.utils.formatEther(data.rawAmountWei);
     if (
       data.assetSymbol === "ETH" &&
       Math.abs(
