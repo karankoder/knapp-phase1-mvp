@@ -8,8 +8,21 @@ import {
 } from "lucide-react-native";
 import { truncateAddress } from "./format";
 
+export type AppNetwork = "base-sepolia" | "base-mainnet";
+
+export const APP_NETWORK: AppNetwork =
+  process.env.EXPO_PUBLIC_NETWORK === "base-mainnet"
+    ? "base-mainnet"
+    : "base-sepolia";
+
+export const IS_MAINNET = APP_NETWORK === "base-mainnet";
+export const CHAIN_ID = IS_MAINNET ? 8453 : 84532;
+export const NETWORK_NAME = IS_MAINNET ? "Base Mainnet" : "Base Sepolia";
+
 export const API_URL = `${process.env.EXPO_PUBLIC_API_URL}/api/v1`;
-export const TX_EXPLORER_BASE_URL = "https://sepolia.basescan.org/tx";
+export const TX_EXPLORER_BASE_URL = IS_MAINNET
+  ? "https://basescan.org/tx"
+  : "https://sepolia.basescan.org/tx";
 export const CHART_DATA = [30, 45, 35, 60, 55, 70, 75];
 export const ACTIVITY_LIMIT = 5;
 

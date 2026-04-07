@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { DEFAULT_ASSETS } from "@/utils/constants";
+import { CHAIN_ID, DEFAULT_ASSETS, NETWORK_NAME } from "@/utils/constants";
 import { WalletService } from "@/services/wallet.service";
 
 export interface Token {
@@ -37,8 +37,8 @@ export interface WalletState {
 export const useWalletStore = create<WalletState>((set, get) => ({
   assets: [...DEFAULT_ASSETS],
   isLoadingBalances: false,
-  networkName: "Base Sepolia",
-  chainId: 84532,
+  networkName: NETWORK_NAME,
+  chainId: CHAIN_ID,
   balanceError: null,
   totalUSDValue: 0,
   change24h: 0,

@@ -1,4 +1,4 @@
-import { alchemy, baseSepolia } from "@account-kit/infra";
+import { alchemy, base, baseSepolia } from "@account-kit/infra";
 import { QueryClient } from "@tanstack/react-query";
 import {
   AlchemyAccountProvider,
@@ -19,6 +19,9 @@ const alchemyGasPolicyId =
     | string
     | undefined);
 
+const selectedChain =
+  process.env.EXPO_PUBLIC_NETWORK === "base-mainnet" ? base : baseSepolia;
+
 if (!alchemyApiKey) {
   throw new Error("Missing EXPO_PUBLIC_ALCHEMY_API_KEY");
 }
@@ -29,7 +32,7 @@ export const AlchemyProvider = ({
   children: React.ReactNode;
 }) => {
   const config = createConfig({
-    chain: baseSepolia,
+    chain: selectedChain,
     transport: alchemy({
       apiKey: alchemyApiKey,
     }),
