@@ -169,9 +169,6 @@ class TransactionService {
       const sent = sentRes.data.result?.transfers || [];
       const received = receivedRes.data.result?.transfers || [];
 
-      console.log("[Alchemy] Sent transactions:", sent.length);
-      console.log("[Alchemy] Received transactions:", received.length);
-
       if (sentRes.data.error) {
         console.error("[Alchemy] Sent request error:", sentRes.data.error);
       }
@@ -189,11 +186,6 @@ class TransactionService {
           seen.add(tx.uniqueId);
           all.push(tx);
         }
-      }
-
-      console.log("[Alchemy] Deduplicated history count:", all.length);
-      if (all.length === 0) {
-        console.warn("[Alchemy] No transactions found for address:", address);
       }
 
       return all;

@@ -22,6 +22,10 @@ export const ContactService = {
       const response = await api.get("/user/quick-contacts");
       return response.data.contacts || [];
     } catch (error: any) {
+      if (error.response?.status === 401) {
+        return [];
+      }
+
       console.error("Failed to get recent contacts:", error);
       return []; // Return empty array instead of throwing
     }

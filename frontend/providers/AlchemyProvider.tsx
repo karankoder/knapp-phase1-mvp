@@ -8,6 +8,21 @@ import Constants from "expo-constants";
 
 const queryClient = new QueryClient();
 
+const alchemyApiKey =
+  process.env.EXPO_PUBLIC_ALCHEMY_API_KEY ||
+  (Constants.expoConfig?.extra?.EXPO_PUBLIC_ALCHEMY_API_KEY as
+    | string
+    | undefined);
+const alchemyGasPolicyId =
+  process.env.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID ||
+  (Constants.expoConfig?.extra?.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID as
+    | string
+    | undefined);
+
+if (!alchemyApiKey) {
+  throw new Error("Missing EXPO_PUBLIC_ALCHEMY_API_KEY");
+}
+
 export const AlchemyProvider = ({
   children,
 }: {
@@ -16,18 +31,15 @@ export const AlchemyProvider = ({
   const config = createConfig({
     chain: baseSepolia,
     transport: alchemy({
-      apiKey: Constants.expoConfig?.extra?.EXPO_PUBLIC_ALCHEMY_API_KEY!,
+      apiKey: alchemyApiKey,
     }),
     signerConnection: {
-      apiKey: Constants.expoConfig?.extra?.EXPO_PUBLIC_ALCHEMY_API_KEY!,
+      apiKey: alchemyApiKey,
     },
     sessionConfig: {
       expirationTimeMs: 1000 * 60 * 60 * 24 * 7,
     },
-
-    policyId:
-      Constants.expoConfig?.extra?.EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID ??
-      undefined,
+    policyId: alchemyGasPolicyId ?? undefined,
   });
 
   return (

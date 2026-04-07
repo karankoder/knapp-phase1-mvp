@@ -18,7 +18,6 @@ export const GroupContactRow = ({
   isSelected,
   onToggle,
 }: GroupContactRowProps) => {
-  console.log(contact);
   return (
     <MotiView
       from={{ opacity: 0, translateY: 10 }}

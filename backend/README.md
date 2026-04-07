@@ -25,7 +25,6 @@ PORT=4000
 NODE_ENV=development
 DATABASE_URL="postgresql://YOUR_USER:YOUR_PASSWORD@localhost:5432/knapp_db?schema=public"
 JWT_SECRET="your_secret"
-COINGECKO_API_KEY=""
 ```
 
 ---

@@ -19,8 +19,6 @@ export const JWT_EXPIRES_IN = "7d";
 export const SALT_ROUNDS = 5;
 
 // CoinGecko API Constants
-export const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY || "";
-export const COINGECKO_API_URL = "https://api.coingecko.com/api/v3";
 export const DEFAULT_ASSET_IDS = ["bitcoin", "ethereum", "solana"];
 export const VS_CURRENCY = "usd";
 
@@ -43,9 +41,6 @@ export const TRANSACTION_CATEGORIES = [
 ] as const;
 export type TransactionCategory = (typeof TRANSACTION_CATEGORIES)[number];
 export const DEFAULT_CATEGORY: TransactionCategory = "transfer";
-
-// RPC Endpoints
-export const RPC_URL = `https://base-sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`;
 
 // Alchemy API
 export const ALCHEMY_KEY = process.env.ALCHEMY_API_KEY || "";

@@ -6,6 +6,7 @@ import { COLORS } from "@/utils/constants";
 import { useAuthenticate } from "@account-kit/react-native";
 import { useState } from "react";
 import * as Haptics from "expo-haptics";
+import * as Linking from "expo-linking";
 
 interface GateScreenProps {
   isCheckingBackend?: boolean;
@@ -23,6 +24,7 @@ export const GateScreen = ({ isCheckingBackend = false }: GateScreenProps) => {
   };
 
   const handleSocialAuth = async (provider: "google" | "apple") => {
+    const redirectUrl = Linking.createURL("oauth-callback");
     setIsLoading(true);
     setError(null);
 
@@ -33,13 +35,13 @@ export const GateScreen = ({ isCheckingBackend = false }: GateScreenProps) => {
             authProviderId: "auth0" as const,
             auth0Connection: "apple",
             mode: "redirect" as const,
-            redirectUrl: "astra://oauth-callback",
+            redirectUrl,
           }
         : {
             type: "oauth" as const,
             authProviderId: "google" as const,
             mode: "redirect" as const,
-            redirectUrl: "astra://oauth-callback",
+            redirectUrl,
           };
 
     try {

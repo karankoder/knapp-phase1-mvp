@@ -2,11 +2,11 @@ import { Pressable, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { COLORS } from "@/utils/constants";
 
-interface AstraDropButtonProps {
+interface AtaraDropButtonProps {
   onPress: () => void;
 }
 
-export const AstraDropButton = ({ onPress }: AstraDropButtonProps) => {
+export const AtaraDropButton = ({ onPress }: AtaraDropButtonProps) => {
   return (
     <Pressable onPress={onPress} className="w-full mb-6 active:opacity-80">
       <LinearGradient

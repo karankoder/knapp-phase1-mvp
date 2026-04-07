@@ -129,8 +129,6 @@ class WalletService {
       const percentChange24h =
         totalUSD24hAgo > 0 ? (change24h / totalUSD24hAgo) * 100 : 0;
 
-      console.log("karan", tokens);
-
       return {
         totalUSD: parseFloat(totalUSD.toFixed(2)),
         change24h: parseFloat(change24h.toFixed(2)),

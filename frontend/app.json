@@ -1,16 +1,16 @@
 {
   "expo": {
     "name": "ATARA",
-    "slug": "astra",
+    "slug": "atara",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "astra",
+    "scheme": "atara",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.astra"
+      "bundleIdentifier": "com.anonymous.atara"
     },
     "android": {
       "adaptiveIcon": {
@@ -21,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.astra"
+      "package": "com.anonymous.atara"
     },
     "web": {
       "output": "static",
@@ -56,8 +56,6 @@
       "expo-localization"
     ],
     "extra": {
-      "EXPO_PUBLIC_ALCHEMY_API_KEY": "",
-      "EXPO_PUBLIC_ALCHEMY_GAS_POLICY_ID": "",
       "router": {
         "origin": false
       }
