@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/appError";
+import { ErrorHandler } from "../utils/errorHandler";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorMiddleware = (
-  err: Error | AppError,
+  err: Error | ErrorHandler,
   req: Request,
   res: Response,
   next: NextFunction
@@ -11,16 +11,13 @@ export const errorMiddleware = (
   let statusCode = 500;
   let message = "Internal Server Error";
 
-  // Check if it's a trusted operational error (AppError)
-  if (err instanceof AppError) {
+  if (err instanceof ErrorHandler) {
     statusCode = err.statusCode;
     message = err.message;
   } else {
-    // Log unknown errors (bugs) to console for debugging
     console.error("UNEXPECTED ERROR:", err);
   }
 
-  // Send strict JSON response
   res.status(statusCode).json({
     status: "error",
     statusCode,
