@@ -1,4 +1,3 @@
-import { View } from "react-native";
 import { MotiView } from "moti";
 
 interface BalanceLoaderProps {

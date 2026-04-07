@@ -1,7 +1,6 @@
 import { View, Text } from "react-native";
 import { TransactionItem } from "./TransactionItem";
 import { TransactionsSkeleton } from "../homeScreen/ActivitySkeleton";
-import { COLORS } from "@/utils/constants";
 import { DisplayTransaction } from "@/stores/useTransactionHistoryStore";
 import { useRouter } from "expo-router";
 

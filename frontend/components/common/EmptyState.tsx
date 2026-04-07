@@ -1,6 +1,5 @@
 import { View, Text } from "react-native";
 import { MotiView } from "moti";
-import { COLORS } from "@/utils/constants";
 
 interface EmptyStateProps {
   icon: string | React.ReactNode;

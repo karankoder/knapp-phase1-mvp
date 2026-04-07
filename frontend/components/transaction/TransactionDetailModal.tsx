@@ -6,14 +6,12 @@ import {
   TouchableOpacity,
   Modal,
   ScrollView,
-  Dimensions,
 } from "react-native";
-import { MotiView, AnimatePresence } from "moti";
+import { MotiView } from "moti";
 import {
   X,
   Check,
   Wine,
-  Coffee,
   ShoppingBag,
   Utensils,
   ArrowLeftRight,

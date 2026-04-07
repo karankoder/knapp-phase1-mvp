@@ -1,8 +1,7 @@
-import { ChevronRight, Scale } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import { Pressable, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { MotiView } from "moti";
-import { COLORS } from "@/utils/constants";
 import { ContactThread } from "@/stores/useTransactionHistoryStore";
 
 interface ContactThreadItemProps {

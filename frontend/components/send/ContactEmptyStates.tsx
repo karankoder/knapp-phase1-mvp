@@ -1,6 +1,5 @@
 import { Pressable, Text, View } from "react-native";
 import { Users, UserPlus, Search, Wifi, Copy } from "lucide-react-native";
-import { MotiView } from "moti";
 import { EmptyState } from "../common/EmptyState";
 import { COLORS } from "@/utils/constants";
 

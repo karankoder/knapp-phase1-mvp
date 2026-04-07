@@ -1,9 +1,6 @@
 import { View, Text } from "react-native";
 import { ContactThreadItem } from "./ContactThreadItem";
-import {
-  DisplayTransaction,
-  ContactThread,
-} from "@/stores/useTransactionHistoryStore";
+import { ContactThread } from "@/stores/useTransactionHistoryStore";
 import { ContactsSkeleton } from "../homeScreen/ActivitySkeleton";
 import { useRouter } from "expo-router";
 

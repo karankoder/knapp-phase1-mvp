@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MotiView } from "moti";
-import { X, Check, Pencil, ArrowLeft, Info } from "lucide-react-native";
+import { Check, Pencil, ArrowLeft, Info } from "lucide-react-native";
 import { COLORS, CATEGORIES } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
 import { useAddressBookStore } from "@/stores/useAddressBookStore";

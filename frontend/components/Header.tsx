@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react-native";
-import { Pressable, Text, View, TouchableOpacity } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { CrownIcon } from "./onboarding/CrownIcon";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { getInitials } from "@/utils/format";

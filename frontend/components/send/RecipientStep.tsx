@@ -11,7 +11,7 @@ interface RecipientStepProps {
 
 export const RecipientStep = ({ onSelectRecipient }: RecipientStepProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { recentContacts, isLoadingRecents } = useContactStore();
+  const { recentContacts } = useContactStore();
 
   const handleSelectContact = (contact: Contact) => {
     onSelectRecipient(contact);

@@ -2,7 +2,6 @@ import { MotiView } from "moti";
 import { Search, X } from "lucide-react-native";
 import { useState, useEffect, useCallback } from "react";
 import { View, TextInput, TouchableOpacity, Text } from "react-native";
-import { COLORS } from "@/utils/constants";
 import * as Haptics from "expo-haptics";
 import { useContactStore, Contact } from "@/stores/useContactStore";
 import debounce from "@/utils/debounce";

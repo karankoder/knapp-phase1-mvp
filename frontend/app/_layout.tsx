@@ -56,7 +56,7 @@ function RootLayoutInner() {
     isLoading: isAuthLoading,
     loadSession,
   } = useAuthStore();
-  const { status: signerStatus, isAuthenticating } = useSignerStatus();
+  const { status: signerStatus } = useSignerStatus();
 
   const isSignerConnected = signerStatus === AlchemySignerStatus.CONNECTED;
   const isFullyAuthenticated = isSignerConnected && isAuthenticated;

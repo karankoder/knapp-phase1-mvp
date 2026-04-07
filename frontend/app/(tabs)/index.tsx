@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { ScrollView, View } from "react-native";
 import { ShareModal } from "../../components/homeScreen/ShareModal";
 import { WeeklyInsights } from "../../components/homeScreen/WeeklyInsights";
@@ -10,7 +10,6 @@ import { ActivityList } from "../../components/homeScreen/ActivityList";
 import { useTransactionHistoryStore } from "@/stores/useTransactionHistoryStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { useGroupStore } from "@/stores/useGroupStore";
-import { useState } from "react";
 import { ACTIVITY_LIMIT } from "@/utils/constants";
 
 export default function HomeTab() {

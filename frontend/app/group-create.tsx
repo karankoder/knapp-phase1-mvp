@@ -1,4 +1,4 @@
-import { View, ScrollView, Platform, ActivityIndicator } from "react-native";
+import { View, ScrollView, ActivityIndicator, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useState, useEffect, useRef } from "react";
@@ -16,7 +16,6 @@ import { GroupMemberPills } from "@/components/groupCreate/GroupMemberPills";
 import { GroupContactSearchBar } from "@/components/groupCreate/GroupContactSearchBar";
 import { GroupContactRow } from "@/components/groupCreate/GroupContactRow";
 import { GroupCreateFooter } from "@/components/groupCreate/GroupCreateFooter";
-import { Text } from "react-native";
 import { Users } from "lucide-react-native";
 import { COLORS } from "@/utils/constants";
 

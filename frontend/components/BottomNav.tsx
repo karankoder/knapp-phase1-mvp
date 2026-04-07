@@ -1,7 +1,7 @@
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
-import { Clock, Home, TrendingUp, User } from "lucide-react-native";
+import { Home, User } from "lucide-react-native";
 import { TouchableOpacity, Text, View } from "react-native";
 import { COLORS } from "@/utils/constants";
 import Svg, { Polyline } from "react-native-svg";

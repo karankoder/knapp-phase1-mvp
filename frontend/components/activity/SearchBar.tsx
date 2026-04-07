@@ -1,6 +1,5 @@
 import { Search, X } from "lucide-react-native";
 import { Pressable, TextInput, View } from "react-native";
-import { COLORS } from "@/utils/constants";
 
 interface SearchBarProps {
   value: string;

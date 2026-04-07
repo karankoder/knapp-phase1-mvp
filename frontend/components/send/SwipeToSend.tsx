@@ -1,12 +1,11 @@
-import { useState, useRef } from "react";
-import { View, Text, Dimensions } from "react-native";
+import { useState } from "react";
+import { View, Text } from "react-native";
 import { MotiView } from "moti";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
   interpolate,
   Extrapolation,
   runOnJS,
